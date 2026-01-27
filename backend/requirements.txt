@@ -1,6 +1,7 @@
 ﻿fastapi
 uvicorn
 pydantic
+email-validator
 pymongo
 redis
 python-jose[cryptography]
