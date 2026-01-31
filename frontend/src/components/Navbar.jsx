@@ -19,8 +19,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
 
   const navLinks = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/planner', label: 'Planner', icon: Sparkles },
-    { path: '/generate', label: 'Generate', icon: Sparkles },
+    { path: '/planner', label: 'Strategic Planner', icon: Sparkles },
     { path: '/history', label: 'History', icon: Clock },
   ];
 

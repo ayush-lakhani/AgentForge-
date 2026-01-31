@@ -4,11 +4,9 @@ import { Moon, Sun } from 'lucide-react';
 import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
-import Generate from './components/Generate';
+import StrategicPlanner from './components/StrategicPlanner';
 import History from './components/History';
 import Navbar from './components/Navbar';
-import StrategyGenerator from './components/StrategyGenerator';
-import StrategyPlanner from './components/StrategyPlanner';
 import Upgrade from './pages/Upgrade';
 import Profile from './pages/Profile';
 import { authAPI } from './api';
@@ -167,16 +165,16 @@ function App() {
               element={user ? <Dashboard /> : <Navigate to="/login" />} 
             />
             <Route 
+              path="/planner" 
+              element={user ? <StrategicPlanner /> : <Navigate to="/login" />} 
+            />
+            <Route 
               path="/generate" 
-              element={user ? <Generate /> : <Navigate to="/login" />} 
+              element={<Navigate to="/planner" />} 
             />
             <Route 
               path="/strategy" 
-              element={user ? <StrategyGenerator /> : <Navigate to="/login" />} 
-            />
-            <Route 
-              path="/planner" 
-              element={user ? <StrategyPlanner /> : <Navigate to="/login" />} 
+              element={<Navigate to="/planner" />} 
             />
             <Route 
               path="/history" 

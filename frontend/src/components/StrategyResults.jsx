@@ -3,10 +3,11 @@ import { User, TrendingUp, Search, Calendar, FileText, Download, RefreshCw, Copy
 import ShareButtons from './ShareButtons';
 
 export default function StrategyResults({ strategy, onReset }) {
-  const [activeTab, setActiveTab] = useState('persona');
+  const [activeTab, setActiveTab] = useState('blueprint');
   const [copied, setCopied] = useState(false);
 
   const tabs = [
+    { id: 'blueprint', label: 'Tactical Blueprint', icon: FileText },
     { id: 'persona', label: 'Persona', icon: User },
     { id: 'gaps', label: 'Competitor Gaps', icon: TrendingUp },
     { id: 'keywords', label: 'Keywords', icon: Search },
@@ -32,7 +33,23 @@ export default function StrategyResults({ strategy, onReset }) {
 
   // Check if content is HTML string or JSON object
   const isHTMLContent = typeof strategy.content === 'string' && strategy.content.includes('<div');
-  const strategyData = strategy.strategy || (isHTMLContent ? null : strategy.content);
+  
+  // Robust data extraction
+  const getStrategyData = () => {
+    // 1. Check for nested strategy object first (Standard response)
+    if (strategy.strategy) {
+      if (strategy.strategy.output_data) return strategy.strategy.output_data;
+      return strategy.strategy;
+    }
+    // 2. Check for output_data at top level (History detail response)
+    if (strategy.output_data) return strategy.output_data;
+    // 3. Fallback to top-level content (Old format)
+    if (strategy.content && !isHTMLContent) return strategy.content;
+    // 4. Fallback to the object itself
+    return strategy;
+  };
+
+  const strategyData = getStrategyData();
 
   // If it's HTML content, render it directly
   if (isHTMLContent) {
@@ -144,6 +161,17 @@ export default function StrategyResults({ strategy, onReset }) {
 
       {/* Tab Content */}
       <div className="glass-card p-8">
+        {/* Tactical Blueprint Tab */}
+        {activeTab === 'blueprint' && strategyData.tactical_blueprint && (
+          <div className="animate-slide-up">
+            <div 
+              className="prose prose-lg dark:prose-invert max-w-none tactical-blueprint"
+              data-experience={(strategyData.experience || strategy.experience || 'beginner').toLowerCase()}
+              dangerouslySetInnerHTML={{ __html: strategyData.tactical_blueprint }}
+            />
+          </div>
+        )}
+
         {/* Persona Tab */}
         {activeTab === 'persona' && (
           <PersonaDisplay personas={strategyData.personas} />
@@ -269,39 +297,64 @@ export default function StrategyResults({ strategy, onReset }) {
 
         {/* Sample Posts Tab */}
         {activeTab === 'posts' && (
-          <div className="space-y-6 animate-slide-up">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Ready-to-Post Content
-            </h3>
-            {strategyData.sample_posts.map((post, index) => (
-              <div key={index} className="glass-card p-6 border-2 border-primary-200 dark:border-primary-800">
-                <div className="flex items-start justify-between mb-4">
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">{post.title}</h4>
-                  <button
-                    onClick={() => handleCopy(post.caption)}
-                    className="flex items-center gap-2 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
-                <p className="text-gray-700 dark:text-gray-300 mb-4 whitespace-pre-wrap">{post.caption}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {post.hashtags.map((tag, i) => (
-                    <span key={i} className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Image Prompt:</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{post.image_prompt}</p>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
-                  📅 Best time to post: {post.best_time}
+          <div className="animate-slide-up">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  Ready-to-Post Content
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  Professionally crafted post ideas ready for your {strategyData.experience || 'target'} audience.
                 </p>
               </div>
-            ))}
+            </div>
+
+            <div className="bp-sample-grid">
+              {(strategyData.sample_posts || []).map((post, index) => (
+                <div key={index} className="bp-sample-card group">
+                  <div className="bp-post-badge">{post.type || 'Platform Post'}</div>
+                  
+                  <div className="bp-sample-content">
+                    {/* Hook Section */}
+                    <div className="bp-sample-block-hook">
+                      <span className="bp-sample-label">The Hook</span>
+                      <div className="bp-sample-text">
+                        {post.hook || post.title || post.caption?.split('\n')[0]}
+                      </div>
+                    </div>
+
+                    {/* Body Section */}
+                    <div>
+                      <span className="bp-sample-label">{post.type?.includes('Carousel') ? 'The Content' : 'The Body'}</span>
+                      <div className="bp-sample-text">
+                        {post.body || post.caption || post.image_prompt}
+                      </div>
+                    </div>
+
+                    {/* CTA Box */}
+                    <div className="bp-cta-box">
+                      <div className="flex-1">
+                        <span className="bp-sample-label">Call to Action</span>
+                        <div className="bp-cta-text">{post.cta || 'Link in bio!'}</div>
+                      </div>
+                      <button
+                        onClick={() => handleCopy(`${post.hook || ''}\n\n${post.body || post.caption || ''}\n\n${post.cta || ''}`)}
+                        className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl hover:scale-110 transition-all text-primary-600 dark:text-primary-400"
+                        title="Copy Script"
+                      >
+                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {(!strategyData.sample_posts || strategyData.sample_posts.length === 0) && (
+              <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/50 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+                <p className="text-gray-500">No sample posts generated for this strategy yet.</p>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -285,6 +285,207 @@
     @apply text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
   }
 
+  /* 
+     ============================================================================
+     PREMIUM TACTICAL BLUEPRINT DESIGN SYSTEM
+     ============================================================================ 
+  */
+  .tactical-blueprint {
+    --bp-primary: var(--oxford);
+    --bp-secondary: var(--oxford-light);
+    --bp-bg-light: rgba(239, 246, 255, 0.5);
+    --bp-border: rgba(30, 58, 138, 0.1);
+  }
+
+  /* Experience-Based Themes */
+  .tactical-blueprint[data-experience="beginner"] {
+    --bp-primary: var(--emerald);
+    --bp-secondary: #059669;
+    --bp-bg-light: rgba(236, 253, 245, 0.5);
+    --bp-border: rgba(16, 185, 129, 0.1);
+  }
+
+  .tactical-blueprint[data-experience="intermediate"] {
+    --bp-primary: var(--oxford-light);
+    --bp-secondary: var(--oxford);
+    --bp-bg-light: rgba(239, 246, 255, 0.5);
+    --bp-border: rgba(37, 99, 235, 0.1);
+  }
+
+  .tactical-blueprint[data-experience="expert"] {
+    --bp-primary: var(--amethyst);
+    --bp-secondary: var(--amethyst-dark);
+    --bp-bg-light: rgba(245, 243, 255, 0.5);
+    --bp-border: rgba(124, 58, 237, 0.1);
+  }
+
+  .tactical-blueprint h1 {
+    @apply text-3xl font-extrabold mb-8 tracking-tight text-transparent bg-clip-text;
+    background-image: linear-gradient(135deg, var(--bp-primary), var(--bp-secondary));
+  }
+
+  .tactical-blueprint h2 {
+    @apply text-xl font-bold mb-4 flex items-center gap-3 pt-4;
+    color: var(--bp-primary);
+  }
+
+  .tactical-blueprint h3 {
+    @apply text-lg font-semibold mb-3 mt-6 flex items-center gap-2;
+    color: var(--bp-secondary);
+  }
+
+  /* Structural Components */
+  .tactical-blueprint .bp-section {
+    @apply mb-10 p-8 rounded-3xl border transition-all duration-500;
+    background: var(--bp-bg-light);
+    border-color: var(--bp-border);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .tactical-blueprint .bp-section {
+    background: rgba(15, 23, 42, 0.4);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .tactical-blueprint .bp-section:hover {
+    @apply transform -translate-y-1 shadow-xl;
+    border-color: var(--bp-primary);
+  }
+
+  /* Badge System */
+  .tactical-blueprint .bp-badge {
+    @apply inline-flex items-center px-4 py-2 rounded-full text-sm font-bold tracking-wide uppercase mb-6 shadow-sm;
+    background: var(--bp-primary);
+    color: white;
+  }
+
+  /* Table Design */
+  .tactical-blueprint .bp-table-container {
+    @apply overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 my-6;
+  }
+
+  .tactical-blueprint table {
+    @apply w-full border-collapse bg-white dark:bg-gray-900/50;
+  }
+
+  .tactical-blueprint th {
+    @apply p-4 text-left font-bold text-sm uppercase tracking-wider border-b;
+    background: var(--bp-bg-light);
+    border-color: var(--bp-border);
+    color: var(--bp-primary);
+  }
+
+  .tactical-blueprint td {
+    @apply p-4 text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800/50;
+  }
+
+  .tactical-blueprint tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* List Styling */
+  .tactical-blueprint ul,
+  .tactical-blueprint ol {
+    @apply space-y-3 my-4;
+  }
+
+  .tactical-blueprint li {
+    @apply flex items-start gap-3 p-3 rounded-xl transition-colors hover:bg-white/50 dark:hover:bg-gray-800/30;
+  }
+
+  .tactical-blueprint .bp-check-list li::before {
+    content: "✓";
+    @apply flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold text-white;
+    background: var(--bp-primary);
+  }
+
+  .tactical-blueprint .bp-avoid-list li::before {
+    content: "✕";
+    @apply flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold text-white;
+    background: #EF4444;
+  }
+
+  .tactical-blueprint .bp-step-list {
+    counter-reset: step-counter;
+  }
+
+  .tactical-blueprint .bp-step-list li {
+    counter-increment: step-counter;
+  }
+
+  .tactical-blueprint .bp-step-list li::before {
+    content: counter(step-counter);
+    @apply flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold text-white;
+    background: var(--bp-secondary);
+  }
+
+  /* Sample Post System - Global & Professional */
+  .bp-sample-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-8 my-8;
+  }
+
+  .bp-sample-card {
+    @apply p-8 rounded-[2.5rem] border-2 transition-all duration-500 relative overflow-hidden flex flex-col;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-color: rgba(226, 232, 240, 0.8);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .bp-sample-card {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(30, 41, 59, 0.8);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  }
+
+  .bp-sample-card:hover {
+    @apply shadow-2xl;
+    transform: translateY(-8px) scale(1.01);
+    border-color: var(--bp-primary);
+  }
+
+  .bp-post-badge {
+    @apply absolute top-6 right-8 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest text-white shadow-lg z-10;
+    background: linear-gradient(135deg, var(--bp-primary), var(--bp-secondary));
+  }
+
+  .bp-sample-content {
+    @apply space-y-6 flex-grow;
+  }
+
+  .bp-sample-label {
+    @apply block text-[11px] font-black uppercase tracking-[0.2em] mb-2;
+    color: var(--bp-primary);
+    opacity: 0.6;
+  }
+
+  .bp-sample-text {
+    @apply text-base leading-relaxed p-6 rounded-[1.5rem] bg-white dark:bg-gray-950/40 border border-gray-100 dark:border-gray-800 shadow-sm font-medium;
+  }
+
+  /* Special styling for different blocks */
+  .bp-sample-block-hook .bp-sample-text {
+    @apply italic text-lg font-bold border-l-4;
+    border-left-color: var(--bp-primary);
+  }
+
+  .bp-cta-box {
+    @apply mt-8 p-6 rounded-[1.5rem] border-2 border-dashed flex items-center justify-between gap-4 transition-all duration-300;
+    border-color: var(--bp-primary);
+    background: var(--bp-bg-light);
+  }
+
+  .bp-sample-card:hover .bp-cta-box {
+    @apply border-solid;
+    background: var(--bp-bg-light);
+    opacity: 1;
+  }
+
+  .bp-cta-text {
+    @apply font-black text-base;
+    color: var(--bp-primary);
+  }
+
   /* Premium input field with glow */
   .input-premium {
     @apply w-full px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-xl transition-all duration-300 outline-none;

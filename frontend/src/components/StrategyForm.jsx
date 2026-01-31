@@ -8,7 +8,8 @@ export default function StrategyForm({ onGenerate, setLoading, setAgentLogs }) {
     audience: '',
     industry: '',
     platform: 'Instagram',
-    contentType: 'Mixed Content'
+    contentType: 'Mixed Content',
+    experience: 'beginner'
   });
   
   const [errors, setErrors] = useState({});
@@ -322,6 +323,45 @@ export default function StrategyForm({ onGenerate, setLoading, setAgentLogs }) {
               >
                 {platform}
               </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Experience Level */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Experience Level
+          </label>
+          <div className="space-y-3">
+            {[
+              { id: 'beginner', label: 'Beginner', desc: 'iPhone + templates, step-by-step guides' },
+              { id: 'intermediate', label: 'Intermediate', desc: 'Batch workflows, optimization strategies' },
+              { id: 'expert', label: 'Expert', desc: 'Viral frameworks, data-driven optimization' }
+            ].map((exp) => (
+              <label 
+                key={exp.id}
+                className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  formData.experience === exp.id 
+                    ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20' 
+                    : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="experience"
+                  value={exp.id}
+                  checked={formData.experience === exp.id}
+                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                  className="mt-1 mr-3 text-primary-600 focus:ring-primary-500"
+                />
+                <div>
+                  <div className={`font-bold ${formData.experience === exp.id ? 'text-primary-700 dark:text-primary-300' : 'text-gray-900 dark:text-white'}`}>
+                    {exp.label}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">{exp.desc}</div>
+                </div>
+              </label>
             ))}
           </div>
         </div>

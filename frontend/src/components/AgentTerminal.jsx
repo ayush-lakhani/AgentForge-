@@ -53,8 +53,8 @@ export default function AgentTerminal({ logs, loading }) {
       </div>
 
       <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-        <p>🔥 Powered by 4 elite AI agents</p>
-        <p>⚡ Groq Llama-3.3-70B inference</p>
+        <p>🚀 Strategy Engine Active</p>
+        <p>⚡ Professional Content Planning</p>
       </div>
     </div>
   );

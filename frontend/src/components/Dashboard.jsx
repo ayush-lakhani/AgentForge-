@@ -145,7 +145,7 @@ export default function Dashboard() {
         <div className="mb-8 relative group animate-slide-up" style={{animationDelay: '100ms'}}>
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-accent-600 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
           <button
-            onClick={() => navigate('/generate')}
+            onClick={() => navigate('/planner')}
             disabled={user?.tier !== 'pro' && stats.thisMonth >= 3}
             className="relative w-full glass-card glass-card-3d btn-3d p-8 rounded-3xl text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >

@@ -5,7 +5,7 @@ import StrategyForm from './StrategyForm';
 import StrategyResults from './StrategyResults';
 import AgentTerminal from './AgentTerminal';
 
-export default function Generate() {
+export default function StrategicPlanner() {
   const [strategy, setStrategy] = useState(null);
   const [loading, setLoading] = useState(false);
   const [agentLogs, setAgentLogs] = useState([]);
@@ -34,7 +34,7 @@ export default function Generate() {
           </button>
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
-              Generate Content Strategy
+              Strategic Planner
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               Elite AI agents will create your complete strategy

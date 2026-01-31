@@ -132,6 +132,7 @@ def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
         - Industry: {strategy_input.industry}
         - Platform: {strategy_input.platform}
         - Content Type: {strategy_input.contentType}
+        - Experience Level: {strategy_input.experience}
         
         🚨 CRITICAL VALIDATION RULES 🚨
         1. Generate 3 DISTINCT personas - NOT the same persona 3 times
@@ -277,6 +278,7 @@ def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
         - Industry: {strategy_input.industry}
         - Platform: {strategy_input.platform}
         - Content Type: {strategy_input.contentType}
+        - Experience Level: {strategy_input.experience}
         
         Output a JSON object with these strategic guidance sections:
         
@@ -319,7 +321,8 @@ def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
           (Format-specific pitfalls!)
         
         Make everything SPECIFIC to {strategy_input.platform}, {strategy_input.industry}, and {strategy_input.contentType}!
-        Not generic advice - actionable, tactical guidance tailored to the content format!
+        Crucially, tailor the technical complexity to the user's experience level: {strategy_input.experience}.
+        Not generic advice - actionable, tactical guidance tailored to the content format and skill level!
         """,
         agent=strategy_synthesizer,
         expected_output="JSON object with detailed strategic execution guidance optimized for content type",
