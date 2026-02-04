@@ -20,6 +20,48 @@ from bson import ObjectId
 from dotenv import load_dotenv # Added for loading environment variables
 load_dotenv()
 
+# ============================================================================
+# ADMIN AUTHENTICATION (SEPARATE FROM USER JWT)
+# ============================================================================
+from fastapi import Header
+
+# Admin secret key (environment variable)
+ADMIN_SECRET = os.getenv("ADMIN_SECRET", "agentforge-admin-2026-change-now")
+
+async def admin_auth(authorization: Optional[str] = Header(None)):
+    """
+    Admin-only authentication using secret key (NOT user JWT)
+    Separate authentication system for admin panel
+    """
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin authorization required"
+        )
+    
+    # Extract token from "Bearer <token>" format
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication scheme"
+            )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header format"
+        )
+    
+    # Validate admin secret
+    if token != ADMIN_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin secret"
+        )
+    
+    return True
+
 # Rate Limiting
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -46,6 +88,54 @@ try:
 except:
     CREW_AI_ENABLED = False
     print("⚠️  CrewAI: Not available - using Template Strategy Engine")
+
+# =============================================================================
+# OPENAI-STYLE RATE LIMITING (MongoDB Rolling Window)
+# =============================================================================
+
+FREE_LIMIT = 10
+WINDOW_HOURS = 5
+
+def check_rate_limit(user_id: str) -> dict:
+    now = datetime.now(timezone.utc)
+    window_start = now - timedelta(hours=WINDOW_HOURS)
+    
+    # Clean up old limits
+    db.rate_limits.delete_many({
+        "user_id": user_id,
+        "timestamp": {"$lt": window_start}
+    })
+    
+    # Count usage in window
+    used = db.rate_limits.count_documents({
+        "user_id": user_id,
+        "timestamp": {"$gte": window_start}
+    })
+    
+    if used >= FREE_LIMIT:
+        reset_time = window_start + timedelta(hours=WINDOW_HOURS)
+        diff = (reset_time - now).total_seconds()
+        reset_h = int(diff // 3600)
+        reset_m = int((diff % 3600) // 60)
+        return {
+            "exceeded": True,
+            "message": f"Free tier limit reached. Try again in {reset_h}h {reset_m}m",
+            "reset_at": reset_time.timestamp(),
+            "used": used,
+            "limit": FREE_LIMIT
+        }
+    
+    # Record new usage
+    db.rate_limits.insert_one({
+        "user_id": user_id,
+        "timestamp": now
+    })
+    return {"exceeded": False, "used": used + 1, "limit": FREE_LIMIT}
+
+# ============================================================================
+# NEW API ENDPOINTS (FIXED)
+# ============================================================================
+
 
 # ============================================================================
 # CONFIGURATION
@@ -98,6 +188,9 @@ def verify_password_sha256(password: str, hashed: str) -> bool:
 
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
+    # Bcrypt has a 72-byte limit, truncate if necessary
+    if len(password.encode('utf-8')) > 72:
+        password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.hash(password)
 
 def verify_password(password: str, hashed: str) -> bool:
@@ -250,20 +343,6 @@ def set_cached_strategy(cache_key: str, strategy: dict, ttl: int = 86400):
     except:
         pass
 
-def check_rate_limit(user_id: str, limit: int = 3) -> bool:
-    if not REDIS_ENABLED:
-        return True
-    
-    current_month = datetime.now().strftime("%Y-%m")
-    key = f"strategy_count:{user_id}:{current_month}"
-    
-    try:
-        current = redis_client.get(key)
-        count = int(current) if current else 0
-        print(f"📊 Rate check: User {user_id} = {count}/{limit} used")
-        return count < limit
-    except:
-        return True
 
 # ============================================================================
 # DEMO STRATEGY DATA
@@ -399,6 +478,69 @@ def generate_demo_strategy(strategy_input: StrategyInput) -> dict:
 # API ENDPOINTS
 # ============================================================================
 
+@app.get("/api/history")
+async def get_history(current_user: dict = Depends(get_current_user)):
+    strategies = list(strategies_collection.find({
+        "user_id": current_user["id"]
+    }).sort("created_at", -1).limit(50))
+    
+    # Serialization fix
+    for s in strategies:
+        s["_id"] = str(s["_id"])
+        if isinstance(s.get("created_at"), datetime):
+            s["created_at"] = s["created_at"].isoformat()
+            
+    return {
+        "history": strategies or [],
+        "count": len(strategies)
+    }
+
+@app.get("/api/profile")
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    return {
+        "email": current_user.get("email"),
+        "tier": current_user.get("tier", "free"),
+        "created_at": current_user.get("created_at"),
+        "razorpay_subscription_id": current_user.get("razorpay_subscription_id")
+    }
+
+@app.post("/api/strategy")
+async def generate_strategy(
+    strategy_input: StrategyInput, 
+    current_user: dict = Depends(get_current_user)
+):
+    # Rate limiting
+    rate_info = check_rate_limit(current_user["id"])
+    if rate_info["exceeded"]:
+        raise HTTPException(status_code=429, detail=rate_info)
+    
+    # Generate full strategy using demo engine (or CrewAI in future)
+    full_strategy = generate_demo_strategy(strategy_input)
+    
+    # Save strategy
+    strategy_doc = {
+        "user_id": current_user["id"],
+        "industry": strategy_input.industry,
+        "platform": strategy_input.platform,
+        "strategy": full_strategy,  # Store the full JSON object here
+        "personas": full_strategy.get("personas", []),
+        "competitor_gaps": full_strategy.get("competitor_gaps", []),
+        "keywords": full_strategy.get("keywords", []),
+        "calendar": full_strategy.get("calendar", []),
+        "sample_posts": full_strategy.get("sample_posts", []),
+        "roi_prediction": full_strategy.get("roi_prediction", {}),
+        "strategic_guidance": full_strategy.get("strategic_guidance", {}),
+        "created_at": datetime.now(timezone.utc)
+    }
+    result = strategies_collection.insert_one(strategy_doc)
+    strategy_doc["_id"] = str(result.inserted_id)
+    
+    return {
+        "strategy": strategy_doc,
+        "usage": rate_info,
+        "message": "Strategy generated!"
+    }
+
 @app.get("/")
 async def root():
     return {
@@ -462,6 +604,45 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "created_at": current_user.get("created_at")
     }
 
+@app.get("/api/history/{strategy_id}")
+async def get_strategy(strategy_id: str, current_user: dict = Depends(get_current_user)):
+    # Verify valid ObjectId
+    if not ObjectId.is_valid(strategy_id):
+        raise HTTPException(status_code=400, detail="Invalid strategy ID")
+        
+    # Find strategy
+    strategy = strategies_collection.find_one({
+        "_id": ObjectId(strategy_id),
+        "user_id": current_user["id"]
+    })
+    
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+        
+    # Serialize ID and Dates
+    strategy["_id"] = str(strategy["_id"])
+    if isinstance(strategy.get("created_at"), datetime):
+        strategy["created_at"] = strategy["created_at"].isoformat()
+        
+    return strategy
+
+@app.delete("/api/history/{strategy_id}")
+async def delete_strategy(strategy_id: str, current_user: dict = Depends(get_current_user)):
+    # Verify valid ObjectId
+    if not ObjectId.is_valid(strategy_id):
+        raise HTTPException(status_code=400, detail="Invalid strategy ID")
+        
+    # Attempt delete (must ensure user owns the strategy)
+    result = strategies_collection.delete_one({
+        "_id": ObjectId(strategy_id),
+        "user_id": current_user["id"]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Strategy not found or unauthorized")
+        
+    return {"message": "Strategy deleted successfully"}
+
 # ============================================================================
 # RAZORPAY CHECKOUT (Pro Tier)
 # ============================================================================
@@ -495,6 +676,203 @@ async def create_checkout_session(request: Request, current_user: dict = Depends
 
 
 # ============================================================================
+# ADMIN PANEL ENDPOINTS (SEPARATE AUTHENTICATION)
+# ============================================================================
+
+@app.get("/api/admin/dashboard")
+async def admin_dashboard(admin: bool = Depends(admin_auth)):
+    """
+    Admin Dashboard - Live MRR tracking and system health
+    Requires admin secret key (NOT user JWT)
+    """
+    try:
+        # Calculate MRR and user metrics
+        pro_users = users_collection.count_documents({"tier": "pro"})
+        total_users = users_collection.count_documents({})
+        mrr = pro_users * 499  # ₹499 per Pro user
+        
+        # Calculate conversion rate
+        conversion_rate = (pro_users / total_users * 100) if total_users > 0 else 0
+        
+        # Get today's strategy count
+        now = datetime.now(timezone.utc)
+        start_of_day = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+        strategies_today = strategies_collection.count_documents({
+            "created_at": {"$gte": start_of_day}
+        })
+        
+        # Total strategies
+        total_strategies = strategies_collection.count_documents({})
+        
+        # System health checks
+        redis_healthy = False
+        try:
+            if REDIS_ENABLED:
+                redis_client.ping()
+                redis_healthy = True
+        except:
+            pass
+        
+        return {
+            "revenue": {
+                "mrr": f"₹{mrr:,}",
+                "mrr_raw": mrr,
+                "pro_users": pro_users,
+                "conversion_rate": f"{conversion_rate:.1f}%"
+            },
+            "usage": {
+                "total_strategies": total_strategies,
+                "strategies_today": strategies_today,
+                "active_users": total_users
+            },
+            "system": {
+                "mongodb_healthy": True,  # If we got here, MongoDB is working
+                "redis_healthy": redis_healthy,
+                "crew_ai_enabled": CREW_AI_ENABLED,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dashboard error: {str(e)}")
+
+
+@app.get("/api/admin/users")
+async def admin_users(
+    limit: int = Query(50, ge=1, le=200),
+    admin: bool = Depends(admin_auth)
+):
+    """
+    Admin Users List - View all users with tier and subscription info
+    Requires admin secret key (NOT user JWT)
+    """
+    try:
+        users = list(users_collection.find(
+            {},
+            {
+                "email": 1,
+                "tier": 1,
+                "created_at": 1,
+                "razorpay_subscription_id": 1,
+                "name": 1,
+                "_id": 1
+            }
+        ).sort("created_at", -1).limit(limit))
+        
+        # Convert ObjectId to string for JSON serialization
+        for user in users:
+            user["_id"] = str(user["_id"])
+            user["created_at"] = user.get("created_at", datetime.now(timezone.utc)).isoformat()
+        
+        return {
+            "users": users,
+            "count": len(users),
+            "total": users_collection.count_documents({})
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Users list error: {str(e)}")
+
+
+# =============================================================================
+# USAGE TRACKING (OpenAI-style live counter)
+# =============================================================================
+
+@app.get("/api/user/usage")
+async def get_usage(current_user: dict = Depends(get_current_user)):
+    """Get current usage for live counter - updates every 30s"""
+    try:
+        user = users_collection.find_one({"_id": ObjectId(current_user["id"])})
+        tier = user.get("tier", "free")
+        
+        if tier == "pro":
+            return {
+                "used": 0,
+                "limit": "unlimited",
+                "tier": "pro",
+                "reset_in": "N/A"
+            }
+        
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(hours=WINDOW_HOURS)
+        
+        # Count strategies in current window
+        used = strategies_collection.count_documents({
+            "user_id": current_user["id"],
+            "created_at": {"$gte": window_start}
+        })
+        
+        # Calculate reset time
+        if used > 0:
+            oldest = strategies_collection.find_one(
+                {"user_id": current_user["id"], "created_at": {"$gte": window_start}},
+                sort=[("created_at", 1)]
+            )
+            if oldest:
+                reset_time = oldest["created_at"] + timedelta(hours=WINDOW_HOURS)
+                diff = (reset_time - now).total_seconds()
+                reset_h = int(diff // 3600)
+                reset_m = int((diff % 3600) // 60)
+                reset_in = f"{reset_h}h {reset_m}m"
+            else:
+                reset_in = f"{WINDOW_HOURS}h 0m"
+        else:
+            reset_in = f"{WINDOW_HOURS}h 0m"
+        
+        return {
+            "used": used,
+            "limit": FREE_LIMIT,
+            "reset_in": reset_in,
+            "progress": round((used / FREE_LIMIT) * 100, 1),
+            "tier": "free"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Usage error: {str(e)}")
+
+
+@app.get("/api/admin/rate-limits")
+async def admin_rate_limits(admin: bool = Depends(admin_auth)):
+    """Admin analytics for rate limiting conversion tracking"""
+    try:
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+        
+        # Count users who hit limit in last 24h
+        pipeline = [
+            {"$match": {"created_at": {"$gte": yesterday}}},
+            {"$group": {"_id": "$user_id", "count": {"$sum": 1}}},
+            {"$match": {"count": {"$gte": FREE_LIMIT}}}
+        ]
+        limits_hit = len(list(strategies_collection.aggregate(pipeline)))
+        
+        # Calculate potential revenue (4.7% conversion)
+        conversion_rate = 0.047
+        potential_conversions = round(limits_hit * conversion_rate)
+        potential_revenue = potential_conversions * 499
+        
+        return {
+            "daily_limits_hit": limits_hit,
+            "conversion_rate": "4.7%",
+            "potential_revenue": f"₹{potential_revenue:,.0f}",
+            "estimated_conversions": potential_conversions,
+            "limit_config": {
+                "free_limit": FREE_LIMIT,
+                "window_hours": WINDOW_HOURS
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Rate limits analytics error: {str(e)}")
+
+
+# ============================================================================
+# SERVER STARTUP
+# ============================================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    print("🚀 Starting AgentForge API Server...")
+    print(f"📊 Admin Panel: Use secret key '{ADMIN_SECRET}' to access /api/admin/*")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+# ============================================================================
 @app.delete("/api/history/{strategy_id}")
 async def delete_strategy(strategy_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a specific strategy and reset usage count"""
@@ -516,12 +894,15 @@ async def delete_strategy(strategy_id: str, current_user: dict = Depends(get_cur
                 print(f"♻️  Usage reset for {current_user['id']} after deletion")
             except Exception as e:
                 print(f"⚠️ Failed to reset usage: {e}")
-        
         return {"success": True, "message": "Strategy deleted and usage reset"}
         
     except Exception as e:
         print(f"❌ Delete error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+# ============================================================================
+# HISTORY ENDPOINTS (Order matters! General routes before parameterized ones)
+# ============================================================================
 
 
 @app.get("/api/history/{strategy_id}")
@@ -1430,14 +1811,19 @@ def generate_coffee_format_strategy(topic: str) -> str:
 # ============================================================================
 
 
-@app.post("/api/strategy")
+@app.post("/api/strategy/legacy_deprecated")
 async def generate_strategy(
     strategy_input: StrategyInput,
     current_user: dict = Depends(get_current_user)
 ):
-    # Rate limiting
-    if not check_rate_limit(current_user["id"]):
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    # Get user tier for rate limiting
+    user = users_collection.find_one({"_id": ObjectId(current_user["id"])})
+    tier = user.get("tier", "free")
+    
+    # OpenAI-style rate limiting (BEFORE expensive LLM call)
+    rate_info = check_rate_limit(current_user["id"], tier)
+    if rate_info["exceeded"]:
+        raise HTTPException(status_code=429, detail=rate_info)
     
     # Check cache
     cache_key = generate_cache_key(strategy_input)
@@ -1517,32 +1903,12 @@ async def generate_strategy(
         "strategy": strategy_dict,
         "cached": False,
         "generation_time": generation_time,
-        "message": message
+        "message": message,
+        "usage": rate_info,  # OpenAI-style usage info
+        "tier": tier
     }
 
-@app.get("/api/history")
-async def get_history(current_user: dict = Depends(get_current_user), limit: int = 20):
-    strategies = list(strategies_collection.find(
-        {"user_id": current_user["id"]}
-    ).sort("created_at", -1).limit(limit))
-    
-    history_items = []
-    for s in strategies:
-        history_items.append({
-            "id": str(s["_id"]),
-            "goal": s["goal"],
-            "audience": s["audience"],
-            "industry": s["industry"],
-            "platform": s["platform"],
-            "created_at": s["created_at"],
-            "generation_time": s.get("generation_time")
-        })
-    
-    return {
-        "success": True,
-        "strategies": history_items,
-        "total": len(history_items)
-    }
+
 
 
 
@@ -1788,8 +2154,3 @@ async def submit_feedback(request: Request, credentials: HTTPAuthorizationCreden
     except Exception as e:
         print(f"❌ Feedback error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

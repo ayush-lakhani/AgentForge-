@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, createContext, useContext } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import Login from './components/Login';
@@ -9,12 +9,29 @@ import History from './components/History';
 import Navbar from './components/Navbar';
 import Upgrade from './pages/Upgrade';
 import Profile from './pages/Profile';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 import { authAPI } from './api';
 
 // Auth Context
 export const AuthContext = createContext(null);
 
 export const useAuth = () => useContext(AuthContext);
+
+// Navbar wrapper to exclude admin routes
+function NavbarWrapper({ darkMode, toggleDarkMode }) {
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Don't show navbar on admin routes
+  const isAdminRoute = location.pathname.startsWith('/admin');
+  
+  if (!user || isAdminRoute) {
+    return null;
+  }
+  
+  return <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -148,8 +165,8 @@ function App() {
           )}
           
           
-          {/* Navbar - Shows on all authenticated pages */}
-          {user && <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />}
+          {/* Navbar - Shows on user pages only (not admin routes) */}
+          <NavbarWrapper darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
 
           <Routes>
             <Route 
@@ -187,6 +204,15 @@ function App() {
             <Route 
               path="/profile" 
               element={user ? <Profile /> : <Navigate to="/login" />} 
+            />
+            {/* Admin Panel Routes (Separate Authentication) */}
+            <Route 
+              path="/admin-login" 
+              element={<AdminLogin />} 
+            />
+            <Route 
+              path="/admin" 
+              element={<AdminDashboard />} 
             />
             <Route 
               path="/" 

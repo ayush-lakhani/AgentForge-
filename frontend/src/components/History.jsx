@@ -18,7 +18,7 @@ export default function History() {
   const loadHistory = async () => {
     try {
       const response = await strategyAPI.getHistory();
-      setStrategies(response.data.strategies);
+      setStrategies(response.data.history);
     } catch (error) {
       console.error('Failed to load history:', error);
     } finally {

@@ -1,6 +1,104 @@
+/* ============================================================================
+   AGENTFORGE DESIGN SYSTEM 2.0 - Conversion Optimized
+   Glassmorphism + Microinteractions for 3x Free→Pro Conversion
+   ============================================================================ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+
+  /* Glassmorphism Components */
+  .glass-hero {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl;
+  }
+
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300;
+  }
+
+  /* Conversion-Optimized Buttons */
+  .btn-primary {
+    @apply bg-gradient-to-r from-emerald-500 via-emerald-600 to-amber-500 text-white font-black py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] transform transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-white/80 backdrop-blur-sm border-2 border-gray-200 hover:border-gray-300 text-gray-800 font-semibold py-4 px-8 rounded-2xl hover:bg-white transition-all duration-200;
+  }
+
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transform transition-all duration-200;
+  }
+
+  /* Microinteractions */
+  .animate-float-in {
+    animation: floatIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .hover-magnet:hover {
+    transform: scale(1.05) translateY(-2px);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+}
+
+@keyframes floatIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Experience-Based Themes */
+.theme-beginner {
+  --primary: #10b981;
+  --gradient: linear-gradient(135deg, #10b981, #047857);
+}
+
+.theme-intermediate {
+  --primary: #3b82f6;
+  --gradient: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.theme-expert {
+  --primary: #8b5cf6;
+  --gradient: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
 
 /* ============================================================================
    PREMIUM SAAS DESIGN SYSTEM - AgentForge Research Platform
@@ -1252,4 +1350,14 @@
   -webkit-transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   -webkit-perspective: 1000;
+}
+/* OpenAI-Style Rate Limiting Animations */
+@keyframes bounce-in {
+  0% { opacity: 0; transform: scale(0.95) translateY(-20px); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }

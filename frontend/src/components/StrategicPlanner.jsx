@@ -1,19 +1,78 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import StrategyForm from './StrategyForm';
 import StrategyResults from './StrategyResults';
 import AgentTerminal from './AgentTerminal';
+import UpgradeModal from './UpgradeModal';
+import ProfileWidget from './ProfileWidget';
+import { strategyAPI } from '../api';
 
 export default function StrategicPlanner() {
   const [strategy, setStrategy] = useState(null);
   const [loading, setLoading] = useState(false);
   const [agentLogs, setAgentLogs] = useState([]);
+  const [usageCount, setUsageCount] = useState(0);
+  const [userTier, setUserTier] = useState('free');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const navigate = useNavigate();
 
-  const handleStrategyGenerated = (data) => {
-    setStrategy(data);
-    setLoading(false);
+  // Fetch user profile and usage on mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('http://localhost:8000/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsageCount(data.usage_month || 0);
+        setUserTier(data.tier || 'free');
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleGenerate = async (formData) => {
+    setLoading(true);
+    setAgentLogs([]);
+    setStrategy(null);
+
+    // Simulate agent logs
+    const logs = [
+      { agent: 'SYSTEM', message: 'Initializing strategy engine...', type: 'info' },
+      { agent: 'ANALYZER', message: `Analyzing ${formData.industry} market trends...`, type: 'agent' },
+      { agent: 'PERSONA', message: `Building ${formData.experience} persona profile...`, type: 'agent' },
+      { agent: 'STRATEGIST', message: `Crafting ${formData.platform} content strategy...`, type: 'agent' },
+      { agent: 'OPTIMIZER', message: 'Generating SEO keywords and calendar...', type: 'agent' },
+    ];
+
+    for (const log of logs) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setAgentLogs(prev => [...prev, log]);
+    }
+
+    try {
+      const result = await strategyAPI.generate(formData);
+      setStrategy(result);
+      setAgentLogs(prev => [...prev, { agent: 'SYSTEM', message: '✅ Strategy generated successfully!', type: 'success' }]);
+      
+      // Refresh usage count after generation
+      await fetchUserProfile();
+    } catch (error) {
+      setAgentLogs(prev => [...prev, { agent: 'ERROR', message: error.message, type: 'error' }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -21,51 +80,56 @@ export default function StrategicPlanner() {
     setAgentLogs([]);
   };
 
+  const handleUpgrade = () => {
+    // Navigate to payment/upgrade page
+    navigate('/dashboard'); // Or navigate to a dedicated upgrade page
+    setShowUpgradeModal(false);
+  };
+
+  const handleCloseModal = () => {
+    setShowUpgradeModal(false);
+  };
+
+  if (strategy) {
+    return <StrategyResults strategy={strategy} onReset={handleReset} />;
+  }
+
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="p-2 rounded-xl hover:bg-white/50 dark:hover:bg-gray-800/50 transition-smooth"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
-              Strategic Planner
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Elite AI agents will create your complete strategy
-            </p>
-          </div>
+        {/* Usage Counter Widget */}
+        <div className="mb-6">
+          <ProfileWidget 
+            usageCount={usageCount} 
+            totalAllowed={3}
+            tier={userTier}
+            onUpgrade={handleUpgrade}
+          />
         </div>
 
-        {/* Main Content */}
-        {!strategy ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form (Left - 2 columns) */}
-            <div className="lg:col-span-2">
-              <StrategyForm 
-                onGenerate={handleStrategyGenerated}
-                setLoading={setLoading}
-                setAgentLogs={setAgentLogs}
-              />
-            </div>
-
-            {/* Agent Terminal (Right - 1 column) */}
-            <div className="lg:col-span-1">
-              <AgentTerminal logs={agentLogs} loading={loading} />
-            </div>
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Left: Form */}
+          <div>
+            <StrategyForm 
+              onGenerate={handleGenerate} 
+              setLoading={setLoading} 
+              setAgentLogs={setAgentLogs}
+            />
           </div>
-        ) : (
-          <StrategyResults 
-            strategy={strategy} 
-            onReset={handleReset}
-          />
-        )}
+
+          {/* Right: Agent Terminal */}
+          <div>
+            <AgentTerminal logs={agentLogs} loading={loading} />
+          </div>
+        </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        usageCount={usageCount}
+        onClose={handleCloseModal}
+        onUpgrade={handleUpgrade}
+      />
     </div>
   );
 }
