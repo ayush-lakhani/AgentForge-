@@ -1,16 +1,11 @@
 """
 Data models and schemas for the Content Strategy Planner
-Includes both Pydantic models (for API validation) and SQLAlchemy models (for database)
+Includes both Pydantic models (for API validation)
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import List, Dict, Optional
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-
-Base = declarative_base()
 
 # ============================================================================
 # PYDANTIC MODELS (API Request/Response Schemas)
@@ -18,11 +13,12 @@ Base = declarative_base()
 
 class StrategyInput(BaseModel):
     """Input schema for strategy generation"""
-    goal: str = Field(..., min_length=10, max_length=500, description="Business goal (e.g., 'Sell coffee on Instagram')")
-    audience: str = Field(..., min_length=5, max_length=200, description="Target audience (e.g., 'college students')")
+    goal: str = Field(..., min_length=5, max_length=500, description="Business goal (e.g., 'Sell coffee on Instagram')")
+    audience: str = Field(..., min_length=3, max_length=200, description="Target audience (e.g., 'college students')")
     industry: str = Field(..., min_length=3, max_length=100, description="Industry (e.g., 'F&B', 'SaaS', 'E-commerce')")
     platform: str = Field(..., min_length=3, max_length=50, description="Primary platform (e.g., 'Instagram', 'LinkedIn')")
     contentType: str = Field(default="Mixed Content", max_length=50, description="Desired content format (e.g., 'Reels', 'Posts', 'Blogs')")
+    experience: str = Field(default="beginner", max_length=50, description="User experience level (beginner/intermediate/expert)")
 
     class Config:
         json_schema_extra = {
@@ -107,7 +103,7 @@ class ROIPrediction(BaseModel):
 
 class ContentStrategy(BaseModel):
     """Complete content strategy output - PRODUCTION SCHEMA"""
-    personas: List[PersonaModel]  # Changed to support multiple personas
+    personas: List[PersonaModel]
     competitor_gaps: List[CompetitorGap]
     strategic_guidance: StrategicGuidance
     keywords: List[KeywordModel]
@@ -184,55 +180,12 @@ class UserResponse(BaseModel):
 
 
 # ============================================================================
-# DATABASE MODELS (SQLAlchemy)
-# ============================================================================
-
-class User(Base):
-    """User table"""
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
-    tier = Column(String(50), default="free")  # free, pro, agency
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    
-    # Relationship to strategies
-    strategies = relationship("Strategy", back_populates="user", cascade="all, delete-orphan")
-
-
-class Strategy(Base):
-    """Strategy generation history table"""
-    __tablename__ = "strategies"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    
-    # Input data
-    goal = Column(String(500), nullable=False)
-    audience = Column(String(200), nullable=False)
-    industry = Column(String(100), nullable=False)
-    platform = Column(String(50), nullable=False)
-    
-    # Output data (stored as JSON)
-    output_data = Column(JSON, nullable=False)
-    
-    # Metadata
-    cache_key = Column(String(255), index=True)  # MD5 hash of input
-    generation_time = Column(Integer)  # Seconds
-    created_at = Column(DateTime, default=datetime.now(timezone.utc))
-    
-    # Relationship to user
-    user = relationship("User", back_populates="strategies")
-
-
-# ============================================================================
 # HISTORY RESPONSE
 # ============================================================================
 
 class StrategyHistoryItem(BaseModel):
     """Single history item"""
-    id: int
+    id: str
     goal: str
     audience: str
     industry: str

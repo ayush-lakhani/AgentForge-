@@ -21,13 +21,6 @@ export default function StrategicPlanner() {
     fetchUserProfile();
   }, []);
 
-  // Refresh usage count when strategy changes
-  useEffect(() => {
-    if (strategy) {
-      fetchUserProfile();
-    }
-  }, [strategy]);
-
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -41,10 +34,15 @@ export default function StrategicPlanner() {
 
       if (response.ok) {
         const data = await response.json();
-        // Fix: Backend returns usage_count, not usage_month
-        setUsageCount(data.usage_count || 0);
+        const serverUsage = data.usage_month || 0;
+        setUsageCount(serverUsage);
         setUserTier(data.tier || 'free');
-        console.log('[PROFILE] Usage count updated:', data.usage_count);
+        console.log('[PROFILE] Usage count updated:', serverUsage);
+
+        // Check for upgrade trigger (e.g. if limit reached)
+        if (serverUsage >= 3 && data.tier === 'free') {
+           // Optional: You could show upgrade modal here
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -73,10 +71,13 @@ export default function StrategicPlanner() {
     try {
       const result = await strategyAPI.generate(formData);
       setStrategy(result);
+      
+      // ✅ OPTIMISTIC UPDATE: Update usage count immediately
+      // This is "Real-Time" for the user, no need to wait for profile fetch
+      setUsageCount(prev => prev + 1);
+      
       setAgentLogs(prev => [...prev, { agent: 'SYSTEM', message: '✅ Strategy generated successfully!', type: 'success' }]);
       
-      // Refresh usage count after generation
-      await fetchUserProfile();
     } catch (error) {
       setAgentLogs(prev => [...prev, { agent: 'ERROR', message: error.message, type: 'error' }]);
     } finally {
@@ -87,6 +88,7 @@ export default function StrategicPlanner() {
   const handleReset = () => {
     setStrategy(null);
     setAgentLogs([]);
+    fetchUserProfile(); // Refresh usage count
   };
 
   const handleUpgrade = () => {
@@ -100,8 +102,8 @@ export default function StrategicPlanner() {
   };
 
   if (strategy) {
-    return <StrategyResults strategy={strategy} onReset={handleReset} />;
-  }
+    return <StrategyResults strategy={strategy.data} onReset={handleReset} />;
+  } 
 
   return (
     <div className="min-h-screen p-6">
@@ -123,6 +125,7 @@ export default function StrategicPlanner() {
               onGenerate={handleGenerate} 
               setLoading={setLoading} 
               setAgentLogs={setAgentLogs}
+              loading={loading}
             />
           </div>
 

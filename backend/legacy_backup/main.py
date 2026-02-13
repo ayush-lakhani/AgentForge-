@@ -17,11 +17,32 @@ import json
 import time
 import os
 from typing import Optional
-from models import StrategyInput, UserCreate, UserLogin, Token, StrategyResponse, HistoryResponse
+try:
+    from models import StrategyInput, UserCreate, UserLogin, Token, StrategyResponse, HistoryResponse
+except ImportError:
+    from .models import StrategyInput, UserCreate, UserLogin, Token, StrategyResponse, HistoryResponse
 from pydantic import BaseModel, EmailStr, Field
 from bson import ObjectId
 from dotenv import load_dotenv # Added for loading environment variables
 load_dotenv()
+
+# Suppress Pydantic V2 protected namespace warning
+import warnings
+warnings.filterwarnings("ignore", message=".*Field \"model_name\" in EmbeddingOptions has conflict with protected namespace \"model_\".*")
+
+print("DEBUG: Starting main.py execution...")
+
+# Fix for Windows Unicode printing
+import sys
+import io
+if sys.platform == 'win32':
+    try:
+        # Check if already utf-8
+        if getattr(sys.stdout, 'encoding', None) != 'utf-8':
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    except Exception as e:
+        pass
 
 # ============================================================================
 # ADMIN AUTHENTICATION (SEPARATE FROM USER JWT)
@@ -79,10 +100,16 @@ import uuid
 from fastapi import BackgroundTasks
 from fastapi.responses import StreamingResponse
 
-# CrewAI disabled due to Python 3.13 compatibility issue with litellm
-# Using demo strategy generator (fully functional)
+# Try to enable CrewAI - falls back to demo mode if import fails
 CREW_AI_ENABLED = False
-print("[INFO] Using Demo Strategy Generator (Python 3.13 compatible)")
+try:
+    from crew import create_content_strategy_crew
+    CREW_AI_ENABLED = True
+    print("[INFO] CrewAI Multi-Agent System Enabled (5 Elite Agents)")
+    print("[INFO] Agents: Audience Surgeon | Trend Sniper | Traffic Architect | Strategy Synthesizer | ROI Predictor")
+except Exception as e:
+    print(f"[WARNING] CrewAI import failed: {str(e)}")
+    print("[INFO] Using Demo Strategy Generator (Python 3.13 compatible)")
 
 
 # =============================================================================
@@ -92,41 +119,60 @@ print("[INFO] Using Demo Strategy Generator (Python 3.13 compatible)")
 FREE_LIMIT = 10
 WINDOW_HOURS = 5
 
-def check_rate_limit(user_id: str) -> dict:
+def check_rate_limit(user_id: str, tier: str = "free") -> dict:
+    """Check if user has exceeded rate limit based on tier"""
+    # Define limits based on tier
+    if tier == "pro":
+        limit = 50  # Pro users get 50 generations per window
+    elif tier == "expert":
+        limit = 100 # Expert users get 100 generations per window
+    else:
+        limit = FREE_LIMIT # Free users get 10 (default)
+
     now = datetime.now(timezone.utc)
     window_start = now - timedelta(hours=WINDOW_HOURS)
     
-    # Clean up old limits
-    db.rate_limits.delete_many({
-        "user_id": user_id,
-        "timestamp": {"$lt": window_start}
-    })
+    # 1. Clean up old limits (optimization: only delete if creating new entry)
+    # db.rate_limits.delete_many(...) - Skipping for speed, relying on TTL or periodic cleanup
     
-    # Count usage in window
+    # 2. Count usage in window
     used = db.rate_limits.count_documents({
         "user_id": user_id,
         "timestamp": {"$gte": window_start}
     })
     
-    if used >= FREE_LIMIT:
+    if used >= limit:
         reset_time = window_start + timedelta(hours=WINDOW_HOURS)
+        # Handle case where reset time is in the past (edge case)
+        if reset_time < now:
+             reset_time = now + timedelta(minutes=1)
+             
         diff = (reset_time - now).total_seconds()
         reset_h = int(diff // 3600)
         reset_m = int((diff % 3600) // 60)
+        
         return {
             "exceeded": True,
-            "message": f"Free tier limit reached. Try again in {reset_h}h {reset_m}m",
+            "message": f"{tier.capitalize()} tier limit ({limit}) reached. Resets in {reset_h}h {reset_m}m",
             "reset_at": reset_time.timestamp(),
             "used": used,
-            "limit": FREE_LIMIT
+            "limit": limit
         }
     
-    # Record new usage
+    # Usage is recorded AFTER successful generation in the main endpoint
+    # This function just CHECKS the limit
+    
+    # Record usage (counting attempts)
     db.rate_limits.insert_one({
         "user_id": user_id,
         "timestamp": now
     })
-    return {"exceeded": False, "used": used + 1, "limit": FREE_LIMIT}
+    
+    return {
+        "exceeded": False,
+        "used": used + 1,
+        "limit": limit
+    }
 
 # ============================================================================
 # NEW API ENDPOINTS (FIXED)
@@ -213,7 +259,9 @@ security = HTTPBearer()
 # MONGODB SETUP
 # ============================================================================
 
+print("DEBUG: Connecting to MongoDB...")
 mongo_client = MongoClient(MONGODB_URL)
+print("DEBUG: MongoDB initialized.")
 db = mongo_client.content_planner
 
 # Collections
@@ -232,10 +280,15 @@ strategies_collection.create_index([("user_id", 1), ("created_at", -1)])
 # ============================================================================
 
 try:
-    redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+    print("DEBUG: Connecting to Redis...")
+    # Add timeout to prevent hang
+    redis_client = redis.from_url(REDIS_URL, decode_responses=True, socket_timeout=2, socket_connect_timeout=2)
+    print("DEBUG: Pinging Redis...")
     redis_client.ping()
+    print("DEBUG: Redis connected.")
     REDIS_ENABLED = True
 except Exception as e:
+    print(f"DEBUG: Redis connection failed: {e}")
     REDIS_ENABLED = False
     print(f"[WARNING] Redis not available - {e}")
     print("[WARNING] Rate limiting disabled")
@@ -261,7 +314,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     print(f"\n{'='*80}")
-    print(f"❌ VALIDATION ERROR at {request.url}")
+    print(f"VALIDATION ERROR at {request.url}")
     print(f"Body: {exc.body}")
     print(f"Errors: {exc.errors()}")
     print(f"{'='*80}\n")
@@ -272,11 +325,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://agentforge.ai",
-        "https://admin.agentforge.ai"
-    ],
+    allow_origins=["*"], # Allow all origins for development to fix CORS issues
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -521,75 +570,184 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
         "razorpay_subscription_id": current_user.get("razorpay_subscription_id")
     }
 
+# ============================================================================
+# EXPERIENCE-BASED STRATEGY GENERATOR
+# ============================================================================
+
+def generate_experience_based_strategy(input_data: dict) -> tuple[str, list]:
+    """
+    Generates the 'Tactical Blueprint' (HTML) and Sample Posts based on inputs.
+    This serves as the deterministic/logic-based layer of the strategy.
+    
+    Args:
+        input_data (dict): Strategy inputs (goal, audience, etc.)
+        
+    Returns:
+        tuple: (blueprint_html_string, sample_posts_list)
+    """
+    
+    # Re-use demo strategy logic to get structured data
+    # converting dict back to StrategyInput for the existing function
+    strategy_input_obj = StrategyInput(**input_data)
+    base_data = generate_demo_strategy(strategy_input_obj)
+    
+    # Extract data for the blueprint
+    guidance = base_data["strategic_guidance"]
+    calendar = base_data["calendar"]
+    
+    # Build HTML Blueprint
+    # This creates the "Tactical Blueprint" tab content in the frontend
+    html = f"""
+    <div class="blueprint-container">
+        <div class="blueprint-section">
+            <h3>🎯 30-Day Execution Plan</h3>
+            <p><strong>Focus:</strong> {input_data.get('goal', 'Growth')}</p>
+            <p><strong>Frequency:</strong> {guidance['when_to_post']['frequency']}</p>
+        </div>
+        
+        <div class="blueprint-section">
+            <h3>💡 Content Pillars</h3>
+            <ul>
+                {"".join([f"<li>{item}</li>" for item in guidance['what_to_do'][:3]])}
+            </ul>
+        </div>
+        
+        <div class="blueprint-section">
+            <h3>🚀 Growth Tactics</h3>
+            <ul>
+                {"".join([f"<li>{item}</li>" for item in guidance['how_to_do_it'][:3]])}
+            </ul>
+        </div>
+        
+        <div class="blueprint-section">
+            <h3>📈 Key Metrics</h3>
+            <p>Focus on: {", ".join(guidance['what_to_focus_on'][:3])}</p>
+        </div>
+    </div>
+    """
+    
+    return html, base_data["sample_posts"]
+
+
 @app.post("/api/strategy")
 async def generate_strategy(
-    request: Request,
+    strategy_input: StrategyInput,
     current_user: dict = Depends(get_current_user)
 ):
-    # LOG EXACT DATA RECEIVED (CRITICAL DEBUG)
-    body = await request.body()
-    print(f"\n{'='*80}")
-    print(f"🔍 RAW REQUEST: {body.decode()}")
+    print("DEBUG: generate_strategy endpoint CALLED (Top Location)")
+    # Get user tier for rate limiting
+    user = users_collection.find_one({"_id": ObjectId(current_user["id"])})
+    tier = user.get("tier", "free")
     
-    # Parse JSON manually first
-    try:
-        data = json.loads(body.decode())
-        print(f"🔍 PARSED JSON: {data}")
-        print("🔍 TYPES:", {k: type(v).__name__ for k,v in data.items()})
-    except Exception as e:
-        print(f"❌ JSON PARSER ERROR: {str(e)}")
-        raise HTTPException(status_code=400, detail="Invalid JSON format")
-    
-    # Convert to Pydantic StrategyInput (with defaults/fallbacks)
-    try:
-        strategy_input = StrategyInput(
-            goal=data.get("goal") or "Professional coffee content strategy",
-            audience=data.get("audience") or "Coffee enthusiasts and cafe owners",
-            industry=data.get("industry") or "Coffee Shop",
-            platform=data.get("platform") or "Instagram",
-            contentType=data.get("contentType") or data.get("content_type") or "Mixed Content",
-            experience=data.get("experience") or "beginner"
-        )
-    except Exception as e:
-        print(f"❌ VALIDATION ERROR: {str(e)}")
-        # If it still fails, the RequestValidationError handler will catch it if we re-raise 
-        # but let's be proactive and log specifically what failed here.
-        raise HTTPException(status_code=422, detail=str(e))
-
-    print(f"[STRATEGY REQUEST] User: {current_user.get('email', 'unknown')}")
-    print(f"[STRATEGY REQUEST] Data: {strategy_input.dict()}")
-    print(f"{'='*80}\n")
-    
-    # Rate limiting
-    rate_info = check_rate_limit(current_user["id"])
+    # OpenAI-style rate limiting (BEFORE expensive LLM call)
+    rate_info = check_rate_limit(current_user["id"], tier)
     if rate_info["exceeded"]:
         raise HTTPException(status_code=429, detail=rate_info)
     
-    # Generate full strategy using demo engine (or CrewAI in future)
-    full_strategy = generate_demo_strategy(strategy_input)
+    # Check cache
+    cache_key = generate_cache_key(strategy_input)
+    cached_strategy = get_cached_strategy(cache_key)
     
-    # Save strategy
+    if cached_strategy:
+        return {
+            "success": True,
+            "strategy": cached_strategy,
+            "cached": True,
+            "generation_time": 0.0,
+            "message": "Strategy retrieved from cache"
+        }
+    
+    # Generate strategy
+    start_time = time.time()
+    
+    # 1. Generate the Tactical Blueprint (The detailed "how-to" manual the user loves)
+    blueprint_input = strategy_input.dict()
+    blueprint_input["topic"] = strategy_input.goal[:50] # Use part of goal as topic
+    blueprint_html, sample_posts = generate_experience_based_strategy(blueprint_input)
+    
+    # 2. Generate the Agent Intelligence (Deep research)
+    if CREW_AI_ENABLED:
+        try:
+            strategy_dict = create_content_strategy_crew(strategy_input)
+            message = "Strategy generated successfully"
+        except Exception as e:
+            strategy_dict = generate_demo_strategy(strategy_input)
+            message = f"⚠️ CrewAI error, using demo: {str(e)}"
+    else:
+        strategy_dict = generate_demo_strategy(strategy_input)
+        message = "⚠️ DEMO MODE: Add GROQ_API_KEY to .env for AI generation"
+    
+    # 3. Merge both into the response
+    # We add the blueprint_html to the strategy_dict so the UI can render it in a new tab
+    strategy_dict["tactical_blueprint"] = blueprint_html
+    strategy_dict["sample_posts"] = sample_posts
+    
+    generation_time = time.time() - start_time
+    
+    # Cache result ONLY if successful (don't cache demo fallback on error)
+    if "CrewAI error" not in message:
+        set_cached_strategy(cache_key, strategy_dict)
+    else:
+        print(f"[CACHE] Skipping cache for failed generation: {message}")
+    
+    # Extract the actual strategy content to avoid nesting issues
+    # CrewAI returns: {strategy: {personas: [], keywords: [], ...}, personas: [], ...}
+    # We only want the inner 'strategy' object
+    if "strategy" in strategy_dict and isinstance(strategy_dict["strategy"], dict):
+        # Use the nested strategy object as the base
+        clean_strategy = strategy_dict["strategy"].copy()
+        # Merge the outer fields into the inner strategy object so frontend can find them
+        clean_strategy["tactical_blueprint"] = blueprint_html
+        clean_strategy["sample_posts"] = sample_posts
+    else:
+        # Fallback to the whole dict if no nesting
+        clean_strategy = strategy_dict.copy()
+
+    # Save to MongoDB
     strategy_doc = {
         "user_id": current_user["id"],
+        "goal": strategy_input.goal,
+        "audience": strategy_input.audience,
         "industry": strategy_input.industry,
         "platform": strategy_input.platform,
-        "strategy": full_strategy,
-        "personas": full_strategy.get("personas", []),
-        "competitor_gaps": full_strategy.get("competitor_gaps", []),
-        "keywords": full_strategy.get("keywords", []),
-        "calendar": full_strategy.get("calendar", []),
-        "sample_posts": full_strategy.get("sample_posts", []),
-        "roi_prediction": full_strategy.get("roi_prediction", {}),
-        "strategic_guidance": full_strategy.get("strategic_guidance", {}),
+        "output_data": clean_strategy,  # Save clean data
+        "cache_key": cache_key,
+        "generation_time": int(generation_time),
         "created_at": datetime.now(timezone.utc)
     }
     result = strategies_collection.insert_one(strategy_doc)
     strategy_doc["_id"] = str(result.inserted_id)
     
+    # Increment usage count
+    if REDIS_ENABLED:
+        try:
+            current_month = datetime.now().strftime("%Y-%m")
+            count_key = f"strategy_count:{current_user['id']}:{current_month}"
+            
+            # Get current or 0
+            current_val = redis_client.get(count_key)
+            new_count = int(current_val) + 1 if current_val else 1
+            
+            # Set with 24h expiry (rolling)
+            redis_client.setex(count_key, 86400, new_count)
+            print(f"[USAGE] Usage incremented for {current_user['id']}: {new_count}/3")
+        except Exception as e:
+            print(f"[WARNING] Failed to increment usage: {e}")
+    
+    
+    
+    # Strategy content already extracted and merged above (lines 2118-2127)
+    # Using 'clean_strategy' variable which contains blueprint and sample_posts
+    
+    
     return {
-        "strategy": strategy_doc,
+        "success": True,
+        "strategy": clean_strategy,  # Wrap in 'strategy' key for frontend compatibility
+        "cached": False,
+        "generation_time": generation_time,
+        "message": message,
         "usage": rate_info,
-        "message": "Strategy generated!"
+        "tier": tier
     }
 
 @app.get("/")
@@ -715,7 +873,8 @@ async def generate_tactical_blueprint(strategy_id: str, current_user: dict = Dep
         raise HTTPException(status_code=404, detail="Strategy not found")
     
     # Extract tactical data from strategy
-    strategy_data = strategy.get("strategy", {})
+    # Support both "output_data" (new format) and "strategy" (legacy format)
+    strategy_data = strategy.get("output_data") or strategy.get("strategy") or {}
     strategic_guidance = strategy_data.get("strategic_guidance", {})
     
     # Build blueprint
@@ -1098,8 +1257,8 @@ async def admin_rate_limits(admin: bool = Depends(admin_auth)):
 
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 Starting AgentForge API Server...")
-    print(f"📊 Admin Panel: Use secret key '{ADMIN_SECRET}' to access /api/admin/*")
+    print("Starting AgentForge API Server...")
+    print(f"Admin Panel: Use secret key '{ADMIN_SECRET}' to access /api/admin/*")
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
@@ -2042,125 +2201,8 @@ def generate_coffee_format_strategy(topic: str) -> str:
 # ============================================================================
 
 
-@app.post("/api/strategy")
-async def generate_strategy(
-    strategy_input: StrategyInput,
-    current_user: dict = Depends(get_current_user)
-):
-    # Get user tier for rate limiting
-    user = users_collection.find_one({"_id": ObjectId(current_user["id"])})
-    tier = user.get("tier", "free")
-    
-    # OpenAI-style rate limiting (BEFORE expensive LLM call)
-    rate_info = check_rate_limit(current_user["id"], tier)
-    if rate_info["exceeded"]:
-        raise HTTPException(status_code=429, detail=rate_info)
-    
-    # Check cache
-    cache_key = generate_cache_key(strategy_input)
-    cached_strategy = get_cached_strategy(cache_key)
-    
-    if cached_strategy:
-        return {
-            "success": True,
-            "strategy": cached_strategy,
-            "cached": True,
-            "generation_time": 0.0,
-            "message": "Strategy retrieved from cache"
-        }
-    
-    # Generate strategy
-    start_time = time.time()
-    
-    # 1. Generate the Tactical Blueprint (The detailed "how-to" manual the user loves)
-    blueprint_input = strategy_input.dict()
-    blueprint_input["topic"] = strategy_input.goal[:50] # Use part of goal as topic
-    blueprint_html, sample_posts = generate_experience_based_strategy(blueprint_input)
-    
-    # 2. Generate the Agent Intelligence (Deep research)
-    if CREW_AI_ENABLED:
-        try:
-            strategy_dict = create_content_strategy_crew(strategy_input)
-            message = "Strategy generated successfully"
-        except Exception as e:
-            strategy_dict = generate_demo_strategy(strategy_input)
-            message = f"⚠️ CrewAI error, using demo: {str(e)}"
-    else:
-        strategy_dict = generate_demo_strategy(strategy_input)
-        message = "⚠️ DEMO MODE: Add GROQ_API_KEY to .env for AI generation"
-    
-    # 3. Merge both into the response
-    # We add the blueprint_html to the strategy_dict so the UI can render it in a new tab
-    strategy_dict["tactical_blueprint"] = blueprint_html
-    strategy_dict["sample_posts"] = sample_posts
-    
-    generation_time = time.time() - start_time
-    
-    # Cache result
-    set_cached_strategy(cache_key, strategy_dict)
-    
-    # Extract the actual strategy content to avoid nesting issues
-    # CrewAI returns: {strategy: {personas: [], keywords: [], ...}, personas: [], ...}
-    # We only want the inner 'strategy' object
-    if "strategy" in strategy_dict and isinstance(strategy_dict["strategy"], dict):
-        # Use the nested strategy object as the base
-        clean_strategy = strategy_dict["strategy"].copy()
-    else:
-        # Fallback to the whole dict if no nesting
-        clean_strategy = strategy_dict.copy()
+# Endpoint moved to line 530 to fix registration issues
 
-    # Save to MongoDB
-    strategy_doc = {
-        "user_id": current_user["id"],
-        "goal": strategy_input.goal,
-        "audience": strategy_input.audience,
-        "industry": strategy_input.industry,
-        "platform": strategy_input.platform,
-        "output_data": clean_strategy,  # Save clean data
-        "cache_key": cache_key,
-        "generation_time": int(generation_time),
-        "created_at": datetime.now(timezone.utc)
-    }
-    strategies_collection.insert_one(strategy_doc)
-    
-    # Increment usage count
-    if REDIS_ENABLED:
-        try:
-            current_month = datetime.now().strftime("%Y-%m")
-            count_key = f"strategy_count:{current_user['id']}:{current_month}"
-            
-            # Get current or 0
-            current_val = redis_client.get(count_key)
-            new_count = int(current_val) + 1 if current_val else 1
-            
-            # Set with 24h expiry (rolling)
-            redis_client.setex(count_key, 86400, new_count)
-            print(f"[USAGE] Usage incremented for {current_user['id']}: {new_count}/3")
-        except Exception as e:
-            print(f"[WARNING] Failed to increment usage: {e}")
-    
-    
-    
-    # Extract the actual strategy content to avoid nesting issues
-    # CrewAI returns: {strategy: {personas: [], keywords: [], ...}, personas: [], ...}
-    # We only want the inner 'strategy' object
-    if "strategy" in strategy_dict and isinstance(strategy_dict["strategy"], dict):
-        # Use the nested strategy object as the base
-        clean_strategy = strategy_dict["strategy"].copy()
-    else:
-        # Fallback to the whole dict if no nesting
-        clean_strategy = strategy_dict.copy()
-    
-    
-    return {
-        "success": True,
-        "strategy": clean_strategy,  # Wrap in 'strategy' key for frontend compatibility
-        "cached": False,
-        "generation_time": generation_time,
-        "message": message,
-        "usage": rate_info,
-        "tier": tier
-    }
 
 
 
@@ -2419,8 +2461,12 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
     total_strategies = strategies_collection.count_documents({"user_id": user_id})
     
     # Count strategies for this month (calendar month)
-    now = datetime.now(timezone.utc)
-    start_of_month = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    today = datetime.now(timezone.utc)
+    # Start of current month
+    start_of_month = datetime(today.year, today.month, 1, tzinfo=timezone.utc)
+    
+    # Count strategies created this month
+    # We use a flexible query to handle potential timezone issues or naive datetimes
     usage_month = strategies_collection.count_documents({
         "user_id": user_id,
         "created_at": {"$gte": start_of_month}
@@ -2506,5 +2552,6 @@ async def submit_feedback(request: Request, credentials: HTTPAuthorizationCreden
 
 if __name__ == "__main__":
     import uvicorn
-    print("✅ Starting AgentForge API...")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    print("Starting AgentForge API...")
+    # reload=False to avoid Python 3.13 multiprocessing issues
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

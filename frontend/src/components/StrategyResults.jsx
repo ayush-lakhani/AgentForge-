@@ -36,45 +36,34 @@ export default function StrategyResults({ strategy, onReset }) {
   
   // Robust data extraction
   const getStrategyData = () => {
-    // The backend saves the strategy like this:
-    // {
-    //   user_id, industry, platform,
-    //   strategy: { personas, competitor_gaps, keywords, ... },  // Full generated data
-    //   personas: [...],           // Also saved at top level
-    //   competitor_gaps: [...],    // Also saved at top level
-    //   strategic_guidance: {...}, // Saved at top level
-    //   roi_prediction: {...},     // Saved at top level
-    //   ...
-    // }
-    
-    // PRIORITY 1: If data is at top level (from history API), use it directly
-    if (strategy.strategic_guidance || strategy.personas || strategy.keywords) {
-      console.log('[GET_STRATEGY_DATA] Using top-level fields from history API');
-      return strategy;
+    const rawInput = strategy?.data || strategy;
+
+    console.log('[GET_STRATEGY_DATA] Analyzing input:', { 
+      hasStrategy: !!rawInput?.strategy,
+      hasGuidance: !!rawInput?.strategic_guidance,
+      keys: Object.keys(rawInput || {})
+    });
+
+    // PRIORITY 1: Nested Strategy Object (Generation API)
+    if (rawInput?.strategy?.strategic_guidance) {
+      console.log('[GET_STRATEGY_DATA] ✅ Found nested strategy with guidance');
+      return rawInput.strategy;
     }
     
-    // PRIORITY 2: Check for nested strategy object (from generation API)
-    if (strategy.strategy) {
-      console.log('[GET_STRATEGY_DATA] Using nested strategy object');
-      if (strategy.strategy.output_data) return strategy.strategy.output_data;
-      return strategy.strategy;
+    // PRIORITY 2: Flat Strategy Object (History API)
+    if (rawInput?.strategic_guidance) {
+      console.log('[GET_STRATEGY_DATA] ✅ Found flat strategy object');
+      return rawInput;
     }
-    
-    // PRIORITY 3: Check for output_data at top level
-    if (strategy.output_data) {
-      console.log('[GET_STRATEGY_DATA] Using output_data');
-      return strategy.output_data;
+
+    // PRIORITY 3: Legacy/Fallback (output_data)
+    if (rawInput?.output_data?.strategic_guidance) {
+      console.log('[GET_STRATEGY_DATA] ✅ Found output_data wrapper');
+      return rawInput.output_data;
     }
-    
-    // PRIORITY 4: Fallback to top-level content (Old format)
-    if (strategy.content && !isHTMLContent) {
-      console.log('[GET_STRATEGY_DATA] Using content field');
-      return strategy.content;
-    }
-    
-    // PRIORITY 5: Fallback to the object itself
-    console.log('[GET_STRATEGY_DATA] Using strategy object as-is');
-    return strategy;
+
+    console.warn('[GET_STRATEGY_DATA] ⚠️ No valid strategy data found in input');
+    return rawInput;
   };
 
   const strategyData = getStrategyData();
@@ -106,6 +95,7 @@ export default function StrategyResults({ strategy, onReset }) {
             </button>
           </div>
         </div>
+
 
         {/* Render HTML Content */}
         <div 
@@ -315,7 +305,13 @@ export default function StrategyResults({ strategy, onReset }) {
 
         {/* Persona Tab */}
         {activeTab === 'persona' && (
-          <PersonaDisplay personas={strategyData.personas} />
+          strategyData.personas && strategyData.personas.length > 0 ? (
+            <PersonaDisplay personas={strategyData.personas} />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">No persona data available</p>
+            </div>
+          )
         )}
 
         {/* Competitor Gaps Tab */}
@@ -324,23 +320,29 @@ export default function StrategyResults({ strategy, onReset }) {
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Competitor Gaps & Opportunities
             </h3>
-            {strategyData.competitor_gaps.map((gap, index) => (
-              <div key={index} className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-6 rounded-xl border-l-4 border-orange-500">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">{gap.gap}</h4>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    gap.impact === 'High' ? 'bg-red-500 text-white' :
-                    gap.impact === 'Medium' ? 'bg-yellow-500 text-white' :
-                    'bg-green-500 text-white'
-                  }`}>
-                    {gap.impact} Impact
-                  </span>
+            {strategyData.competitor_gaps && (strategyData.competitor_gaps || []).length > 0 ? (
+              strategyData.competitor_gaps.map((gap, index) => (
+                <div key={index} className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 p-6 rounded-xl border-l-4 border-orange-500">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">{gap.gap}</h4>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      gap.impact === 'High' ? 'bg-red-500 text-white' :
+                      gap.impact === 'Medium' ? 'bg-yellow-500 text-white' :
+                      'bg-green-500 text-white'
+                    }`}>
+                      {gap.impact} Impact
+                    </span>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    <span className="font-semibold">How to exploit:</span> {gap.implementation}
+                  </p>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-semibold">How to exploit:</span> {gap.implementation}
-                </p>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">No competitor gaps data available</p>
               </div>
-            ))}
+            )}
           </div>
         )}
 
@@ -363,7 +365,7 @@ export default function StrategyResults({ strategy, onReset }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {strategyData.keywords.map((keyword, index) => (
+                  {(strategyData.keywords || []).map((keyword, index) => (
                     <tr key={index} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{keyword.term}</td>
                       <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{keyword.intent}</td>
@@ -417,7 +419,7 @@ export default function StrategyResults({ strategy, onReset }) {
               30-Day Content Calendar
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {strategyData.calendar.map((item, index) => (
+              {(strategyData.calendar || []).map((item, index) => (
                 <div key={index} className="bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary-900/20 dark:to-accent-900/20 p-6 rounded-xl border border-primary-200 dark:border-primary-800">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-bold text-primary-600 dark:text-primary-400">

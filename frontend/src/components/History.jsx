@@ -133,6 +133,7 @@ export default function History() {
           
           {/* Use the beautiful StrategyResults component */}
           <StrategyResults 
+            key={selectedStrategy.id || selectedStrategy._id}
             strategy={selectedStrategy} 
             onReset={() => setSelectedStrategy(null)}
           />

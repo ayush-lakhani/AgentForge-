@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Target, Calendar, TrendingUp, CheckCircle } from 'lucide-react';
+import { strategyAPI } from '../api';
 
 export default function TacticalBlueprint() {
   const { strategyId } = useParams();
@@ -15,24 +13,11 @@ export default function TacticalBlueprint() {
         setLoading(true);
         setError(null);
         
-        const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:8000/api/strategies/${strategyId}/blueprint`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to generate blueprint');
-        }
-
-        const data = await response.json();
-        setBlueprint(data.blueprint);
+        const response = await strategyAPI.getBlueprint(strategyId);
+        setBlueprint(response.data.blueprint);
       } catch (error) {
         console.error('Blueprint generation failed:', error);
-        setError(error.message);
+        setError(error.message || 'Failed to generate blueprint');
       } finally {
         setLoading(false);
       }

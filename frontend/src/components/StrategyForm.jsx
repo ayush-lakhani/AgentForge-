@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Target, Users, Briefcase, Share2, Sparkles, FileText } from 'lucide-react';
 import { strategyAPI } from '../api';
 
-export default function StrategyForm({ onGenerate, setLoading, setAgentLogs }) {
+export default function StrategyForm({ onGenerate, setLoading, setAgentLogs, loading }) {
   const [formData, setFormData] = useState({
     goal: '',
     audience: '',
@@ -149,8 +149,10 @@ export default function StrategyForm({ onGenerate, setLoading, setAgentLogs }) {
   ];
   const contentTypes = ['Mixed Content', 'Reels/Short Videos', 'Posts/Feed Content', 'Stories', 'Carousels', 'Long-Form Videos', 'Blogs/Articles', 'Live Streams'];
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return; // 🚫 Prevent double submit
+    
     setErrors({});
     
     // Validation
@@ -170,87 +172,18 @@ export default function StrategyForm({ onGenerate, setLoading, setAgentLogs }) {
       return;
     }
 
-    setLoading(true);
-    
-    // Simulate agent logs
-    setAgentLogs([
-      { agent: 'System', message: 'Initializing CrewAI agents...', type: 'info' },
-      { agent: 'Audience Surgeon', message: 'Analyzing target audience psychology...', type: 'agent' },
-    ]);
+    // 🚀 BULLETPROOF FETCH PREP
+    const safeData = {
+      goal: formData.goal.substring(0, 500),
+      audience: formData.audience.substring(0, 200),
+      industry: formData.industry.substring(0, 100),
+      platform: formData.platform || "Instagram",
+      contentType: formData.contentType || "Mixed Content",
+      experience: formData.experience || "beginner"
+    };
 
-    setTimeout(() => {
-      setAgentLogs(prev => [...prev, 
-        { agent: 'Trend Sniper', message: 'Scanning cultural trends and competitor gaps...', type: 'agent' },
-      ]);
-    }, 2000);
-
-    setTimeout(() => {
-      setAgentLogs(prev => [...prev, 
-        { agent: 'Traffic Architect', message: 'Building keyword ladder (KD<25)...', type: 'agent' },
-      ]);
-    }, 4000);
-
-    setTimeout(() => {
-      setAgentLogs(prev => [...prev, 
-        { agent: 'Strategy Synthesizer', message: 'Generating 30-day calendar...', type: 'agent' },
-      ]);
-    }, 6000);
-
-    try {
-      // 🚀 BULLETPROOF FETCH PREP
-      const safeData = {
-        goal: (formData.goal || "Professional coffee content strategy").substring(0, 500),
-        audience: (formData.audience || "Coffee enthusiasts and cafe owners").substring(0, 200),
-        industry: (formData.industry || "Coffee Shop").substring(0, 100),
-        platform: formData.platform || "Instagram",
-        contentType: formData.contentType || "Mixed Content",
-        experience: formData.experience || "beginner"
-      };
-
-      console.log('🚀 Sending safe strategy request:', safeData);
-      
-      const response = await strategyAPI.generate(safeData);
-      
-      console.log('✅ Strategy response received:', response.data);
-      
-      const generationTime = response.data.generation_time || response.data.strategy?.generation_time || 0;
-      
-      setAgentLogs(prev => [...prev, 
-        { agent: 'System', message: `✓ Strategy generated successfully${generationTime ? ` in ${generationTime.toFixed(1)}s` : ''}`, type: 'success' },
-      ]);
-
-      setTimeout(() => {
-        onGenerate(response.data);
-      }, 500);
-    } catch (error) {
-      // Log detailed error information
-      console.error('❌ Strategy generation error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        headers: error.response?.headers,
-        requestData: formData
-      });
-      
-      // Show detailed error in terminal
-      let errorMessage = 'Generation failed';
-      if (error.response?.data?.detail) {
-        if (Array.isArray(error.response.data.detail)) {
-          // Pydantic validation errors
-          const errors = error.response.data.detail.map(e => 
-            `${e.loc?.join('.')||'unknown'}: ${e.msg}`
-          ).join(', ');
-          errorMessage = `Validation error: ${errors}`;
-        } else {
-          errorMessage = error.response.data.detail;
-        }
-      }
-      
-      setAgentLogs(prev => [...prev, 
-        { agent: 'System', message: `✗ Error: ${errorMessage}`, type: 'error' },
-      ]);
-      setLoading(false);
-    }
+    console.log('🚀 Sending safe strategy request to parent:', safeData);
+    onGenerate(safeData);
   };
 
   return (
@@ -414,10 +347,22 @@ export default function StrategyForm({ onGenerate, setLoading, setAgentLogs }) {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full btn-gradient flex items-center justify-center gap-2"
+          disabled={loading}
+          className={`w-full btn-gradient flex items-center justify-center gap-2 ${
+            loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'
+          }`}
         >
-          <Sparkles className="w-5 h-5" />
-          Generate Strategy
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Generating Strategy...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5" />
+              Generate Strategy
+            </>
+          )}
         </button>
       </form>
     </div>

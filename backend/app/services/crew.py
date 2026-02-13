@@ -5,15 +5,17 @@ Each agent has a specific role, goal, and backstory designed for maximum perform
 
 from crewai import Agent, Task, Crew, Process
 from langchain_groq import ChatGroq
-from models import StrategyInput, ContentStrategy
+from app.models.schemas import StrategyInput, ContentStrategy
 import json
 import os
+from app.core.config import settings
 
 # SerpAPI Tool for Real Keyword Research
 try:
     from crewai_tools import SerperDevTool
-    SERPAPI_ENABLED = bool(os.getenv("SERPAPI_KEY"))
+    SERPAPI_ENABLED = bool(settings.SERPAPI_KEY)
     if SERPAPI_ENABLED:
+        os.environ["SERPAPI_API_KEY"] = settings.SERPAPI_KEY
         serper_tool = SerperDevTool()
 except ImportError:
     SERPAPI_ENABLED = False
@@ -21,9 +23,9 @@ except ImportError:
 
 # Initialize Groq LLM (Llama-3.3-70B)
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="groq/llama-3.3-70b-versatile",
     temperature=0.7,
-    groq_api_key=os.getenv("GROQ_API_KEY")
+    groq_api_key=settings.GROQ_API_KEY
 )
 
 def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
@@ -173,7 +175,7 @@ def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
               "occupation": "Marketing Manager & Parent",
               "pain_points": ["Morning chaos with kids - need reliable coffee", "Grocery store coffee disappoints", "No time to visit specialty coffee shops", "Want to explore coffee but overwhelmed by options", "Need something special beyond Nespresso pods"],
               "desires": ["Curated coffee experience delivered", "Discover artisan roasters without research", "Enjoy premium coffee during rare me-time", "Feel sophisticated despite busy parent life", "Support small businesses through coffee purchases"],
-              "objections": ["Family budget is tight - is specialty coffee worth it?", "Kids might spill expensive coffee", "Already have too many subscriptions", "Worried about coffee preferences changing", "Skeptical about online coffee quality"],
+              "objections": ["Family budget is tight - is specialty coffee worth it?", "Kids might spill expensive coffee", "Already have too many subscriptions", "Worried about coffee preferences changing", "Skeptical of online coffee quality"],
               "daily_habits": ["Quick Instagram scroll during morning coffee", "Checks Stories while kids are at school", "Engages with food/lifestyle content", "Saves coffee recipes for weekends", "Shares family moments on Instagram"],
               "content_preferences": ["Informational Posts about coffee origins", "Longer-form educational content", "Coffee + parenting lifestyle posts", "Recipe carousel posts for coffee drinks", "Authentic behind-the-scenes Stories"]
             }}
@@ -267,65 +269,37 @@ def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
     )
 
     # ============================================================================
-    # TASK 3: STRATEGIC EXECUTION GUIDANCE (NEW)
+    # TASK 3: STRATEGIC GUIDANCE (BULLETPROOF VERSION)
     # ============================================================================
     strategy_guidance_task = Task(
         description=f"""
-        Based on the persona and competitor gaps, create a detailed strategic execution guide.
+        🎯 CRITICAL: Output EXACTLY this JSON structure. NO extra text. NO markdown.
+
+        {{
+            "what_to_do": ["Action 1", "Action 2", "Action 3", "Action 4", "Action 5"],
+            "how_to_do_it": ["Tactic 1", "Tactic 2", "Tactic 3", "Tactic 4", "Tactic 5"], 
+            "when_to_post": {{
+                "frequency": "3 posts/week",
+                "best_times": ["9AM", "6PM", "8PM"],
+                "best_days": ["Monday", "Wednesday", "Friday"],
+                "consistency_tips": ["Tip 1", "Tip 2", "Tip 3"]
+            }},
+            "what_to_focus_on": ["Metric 1", "Metric 2", "Metric 3", "Metric 4", "Metric 5"],
+            "why_it_works": ["Reason 1", "Reason 2", "Reason 3", "Reason 4", "Reason 5"],
+            "productivity_boosters": ["Tip 1", "Tip 2", "Tip 3", "Tip 4", "Tip 5"],
+            "things_to_avoid": ["Mistake 1", "Mistake 2", "Mistake 3", "Mistake 4", "Mistake 5"]
+        }}
+
+        Context: {strategy_input.goal} | {strategy_input.audience} | {strategy_input.industry} | {strategy_input.platform}
+
+        Generate content SPECIFIC to {strategy_input.contentType} format.
+        Tailor complexity to {strategy_input.experience} level.
+        Make everything actionable and tactical, not generic advice.
         
-        - Goal: {strategy_input.goal}
-        - Audience: {strategy_input.audience}
-        - Industry: {strategy_input.industry}
-        - Platform: {strategy_input.platform}
-        - Content Type: {strategy_input.contentType}
-        - Experience Level: {strategy_input.experience}
-        
-        Output a JSON object with these strategic guidance sections:
-        
-        - "what_to_do": Array of 5-7 specific content types/topics to create
-          (MUST be optimized for {strategy_input.contentType}!)
-          (e.g., for "Reels": "Behind-the-scenes 15-sec clips", "Trending audio transitions")
-          (e.g., for "Blogs": "2000-word how-to guides", "Case study breakdowns")
-        
-        - "how_to_do_it": Array of 5-7 tactical execution tips
-          (Specific to {strategy_input.contentType} format!)
-          (e.g., for Reels: "Hook in first 3 seconds", "Use text overlays")
-          (e.g., for Blogs: "Use H2/H3 structure", "Add internal links")
-        
-        - "where_to_post": Object with platform-specific guidance:
-          {{
-            "primary_platform": "{strategy_input.platform}",
-            "posting_locations": Array of specific places for {strategy_input.contentType} on {strategy_input.platform},
-            "cross_promotion": Array of 2-3 other platforms to repurpose {strategy_input.contentType}
-          }}
-        
-        - "when_to_post": Object with timing strategy:
-          {{
-            "best_days": Array of optimal days,
-            "best_times": Array of time slots optimized for {strategy_input.contentType},
-            "frequency": Posting frequency realistic for {strategy_input.contentType},
-            "consistency_tips": Array of 2-3 tips for staying consistent with {strategy_input.contentType}
-          }}
-        
-        - "what_to_focus_on": Array of 5 key success metrics for {strategy_input.contentType}
-          (Different for Reels vs Blogs vs Posts!)
-          (e.g., Reels: "Watch time percentage", Blogs: "Time on page", Posts: "Save rate")
-        
-        - "why_it_works": Array of 5 psychological/strategic reasons {strategy_input.contentType} works
-          (Specific to the format!)
-        
-        - "productivity_boosters": Array of 5 tips to maximize {strategy_input.contentType} creation efficiency
-          (Format-specific workflows!)
-        
-        - "things_to_avoid": Array of 5 common mistakes with {strategy_input.contentType}
-          (Format-specific pitfalls!)
-        
-        Make everything SPECIFIC to {strategy_input.platform}, {strategy_input.industry}, and {strategy_input.contentType}!
-        Crucially, tailor the technical complexity to the user's experience level: {strategy_input.experience}.
-        Not generic advice - actionable, tactical guidance tailored to the content format and skill level!
+        JSON ONLY. No ```json wrappers. No explanations.
         """,
         agent=strategy_synthesizer,
-        expected_output="JSON object with detailed strategic execution guidance optimized for content type",
+        expected_output="JSON object with EXACT keys: what_to_do, how_to_do_it, when_to_post, what_to_focus_on, why_it_works, productivity_boosters, things_to_avoid",
         context=[persona_task, gaps_task]
     )
 
@@ -477,7 +451,10 @@ def create_content_strategy_crew(strategy_input: StrategyInput) -> dict:
         agents=[audience_surgeon, trend_sniper, traffic_architect, strategy_synthesizer, roi_predictor],
         tasks=[persona_task, gaps_task, strategy_guidance_task, keywords_task, calendar_task, roi_task],
         process=Process.sequential,  # Execute tasks in order
-        verbose=True
+        verbose=True,
+        max_rpm=10,      # Limit requests to avoid Groq RateLimitError
+        cache=True,      # Enable caching to save tokens/time on retries
+        share_crew=False # Privacy setting
     )
 
     # Execute the crew with inputs
