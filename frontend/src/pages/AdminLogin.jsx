@@ -73,7 +73,7 @@ export default function AdminLogin() {
           Separate from user login system
         </p>
         <p className="text-white/40 text-xs text-center mt-2">
-          Default: agentforge-admin-2026-change-now
+          Default: planvix-admin-2026-change-now
         </p>
       </div>
     </div>

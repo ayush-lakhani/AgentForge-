@@ -1,5 +1,5 @@
 /* ============================================================================
-   AGENTFORGE DESIGN SYSTEM 2.0 - Conversion Optimized
+   PLANVIX DESIGN SYSTEM 2.0 - Conversion Optimized
    Glassmorphism + Microinteractions for 3x Free→Pro Conversion
    ============================================================================ */
 
@@ -101,7 +101,7 @@
 }
 
 /* ============================================================================
-   PREMIUM SAAS DESIGN SYSTEM - AgentForge Research Platform
+   PREMIUM SAAS DESIGN SYSTEM - Planvix Research Platform
    Custom Oxford Blue/Amethyst Palette - Hand-Crafted Premium
    ============================================================================ */
 
@@ -1351,11 +1351,22 @@
   -webkit-backface-visibility: hidden;
   -webkit-perspective: 1000;
 }
+
 /* OpenAI-Style Rate Limiting Animations */
 @keyframes bounce-in {
-  0% { opacity: 0; transform: scale(0.95) translateY(-20px); }
-  60% { opacity: 1; transform: scale(1.02); }
-  100% { transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .animate-bounce-in {

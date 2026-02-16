@@ -26,7 +26,7 @@ export default function UpgradePage() {
         const options = {
           key: data.razorpay_key,
           subscription_id: data.subscription_id,
-          name: 'AgentForge',
+          name: 'Planvix',
           description: 'Pro Subscription - ₹2,400/month',
           handler: function(response) {
             // Success - redirect to dashboard
@@ -65,12 +65,12 @@ export default function UpgradePage() {
         <div className="max-w-2xl mx-auto text-center">
           <div className="relative w-28 h-28 mx-auto mb-8 animate-fade-in">
             <div className="w-28 h-28 bg-gradient-to-br from-green-500 to-emerald-500 rounded-3xl flex flex-col items-center justify-center shadow-2xl p-4">
-              <img src="/logo.png" alt="AgentForge Pro" className="w-full h-auto" style={{filter: 'brightness(1.2) drop-shadow(0 4px 12px rgba(255,255,255,0.3))'}} />
+              <div className="text-4xl font-black text-white">P</div>
             </div>
             <div className="absolute -inset-2 bg-green-500 rounded-3xl opacity-20 animate-ping"></div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent mb-6 animate-slide-up">
-            Welcome to AgentForge Pro!
+            Welcome to Planvix Pro!
           </h1>
           <div className="glass-card p-8 rounded-3xl shadow-2xl border border-green-200 dark:border-green-800 animate-slide-up" style={{animationDelay: '100ms'}}>
             <h3 className="font-bold text-2xl text-green-800 dark:text-green-300 mb-6">Your Benefits:</h3>
@@ -110,14 +110,14 @@ export default function UpgradePage() {
       <div className="max-w-4xl mx-auto">
         {/* HERO SECTION */}
         <div className="text-center mb-20 animate-fade-in">
-          {/* Animated Logo */}
-          <div className="flex justify-center mb-8">
-            <img 
-              src="/logo.png" 
-              alt="AgentForge" 
-              className="h-48 w-auto animate-pulse" 
-              style={{filter: 'drop-shadow(0 12px 32px rgba(59, 130, 246, 0.6))'}}
-            />
+          {/* Planvix Pro Branding */}
+          <div className="text-center mb-8">
+            <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 animate-pulse">
+              Planvix Pro
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-400">
+              Unlock Unlimited Growth with AI-powered strategy automation
+            </p>
           </div>
 
           <div className="inline-flex items-center bg-gradient-to-r from-orange-400 via-red-400 to-pink-500 
@@ -131,7 +131,7 @@ export default function UpgradePage() {
             Growth
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Creators using AgentForge Pro strategies earn <strong>₹4L+ monthly</strong>. 
+            Creators using Planvix Pro strategies earn <strong>₹4L+ monthly</strong>. 
             Get real SEO keywords, unlimited AI agents, and priority processing.
           </p>
         </div>

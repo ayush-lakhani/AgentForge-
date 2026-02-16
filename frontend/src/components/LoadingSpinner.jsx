@@ -1,23 +1,18 @@
 export default function LoadingSpinner({ message = "Generating your strategy..." }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-purple-950">
-      {/* Animated Logo */}
+      {/* Animated Icon */}
       <div className="relative mb-8">
-        <img 
-          src="/logo.png" 
-          alt="AgentForge" 
-          className="h-40 w-auto animate-pulse"
-          style={{
-            filter: 'drop-shadow(0 8px 24px rgba(59, 130, 246, 0.5))'
-          }}
-        />
+        <div className="w-40 h-40 bg-gradient-to-br from-primary-500 via-primary-600 to-accent-500 rounded-3xl flex items-center justify-center shadow-2xl animate-pulse">
+          <div className="text-6xl font-black text-white">P</div>
+        </div>
         {/* Pulse ring */}
         <div className="absolute inset-0 rounded-full border-4 border-primary-500 opacity-20 animate-ping"></div>
       </div>
 
       {/* Brand Text */}
       <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent mb-2">
-        AgentForge AI
+        Planvix AI
       </h2>
       
       {/* Loading Message */}

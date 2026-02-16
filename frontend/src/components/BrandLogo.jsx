@@ -25,7 +25,7 @@ export function AgentDotsLogo({ size = 'md', showSlogan = true }) {
       {/* Brand Name + Slogan */}
       <div className="flex flex-col">
         <h1 className={`${s.text} font-black bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent leading-none`}>
-          AGENTFORGE
+          PLANVIX
         </h1>
         {showSlogan && (
           <p className={`${s.slogan} font-bold text-gray-600 dark:text-gray-400 tracking-wider uppercase mt-0.5`}>
@@ -49,7 +49,7 @@ export function AgentDotsCompact() {
         </div>
       </div>
       <span className="text-xl font-black bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent">
-        AGENTFORGE
+        PLANVIX
       </span>
     </div>
   );

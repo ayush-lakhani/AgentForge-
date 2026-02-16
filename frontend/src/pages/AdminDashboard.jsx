@@ -101,7 +101,7 @@ const EnterpriseAdminDashboard = () => {
                 <Shield className="w-6 h-6" />
               </div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">
-                  AgentForge Admin <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 ml-2">PRO</span>
+                  Planvix Admin <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 ml-2">PRO</span>
               </h1>
             </div>
             <div className="flex items-center gap-2">

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings:
-    PROJECT_NAME: str = "AgentForge"
+    PROJECT_NAME: str = "Planvix"
     VERSION: str = "2.0.0-production"
     
     # Database
@@ -20,7 +20,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_HOURS: int = 24
     
     # Admin
-    ADMIN_SECRET: str = os.getenv("ADMIN_SECRET", "agentforge-admin-2026-change-now")
+    ADMIN_SECRET: str = os.getenv("ADMIN_SECRET", "planvix-admin-2026-change-now")
     
     # AI & API Keys
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")

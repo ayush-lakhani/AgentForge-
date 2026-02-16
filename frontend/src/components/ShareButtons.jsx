@@ -5,7 +5,7 @@ export default function ShareButtons({ strategy }) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = (platform) => {
-    const shareText = `Check out this AI-generated content strategy from AgentForge! 🚀\\n\\nGenerated ${strategy.calendar?.length || 30} days of content in 30 seconds.`;
+    const shareText = `Check out this AI-generated content strategy from Planvix! 🚀\\n\\nGenerated ${strategy.calendar?.length || 30} days of content in 30 seconds.`;
     const shareUrl = window.location.href;
 
     switch (platform) {
@@ -13,7 +13,7 @@ export default function ShareButtons({ strategy }) {
         window.open(`https://wa.me/?text=${encodeURIComponent(shareText + '\\n' + shareUrl)}`, '_blank');
         break;
       case 'email':
-        window.open(`mailto:?subject=AI Content Strategy from AgentForge&body=${encodeURIComponent(shareText + '\\n\\n' + shareUrl)}`, '_blank');
+        window.open(`mailto:?subject=AI Content Strategy from Planvix&body=${encodeURIComponent(shareText + '\\n\\n' + shareUrl)}`, '_blank');
         break;
       case 'copy':
         navigator.clipboard.writeText(shareUrl);
@@ -31,7 +31,7 @@ export default function ShareButtons({ strategy }) {
     <div className="share-section p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10 rounded-2xl mt-8 animate-fade-in">
       <h3 className="font-bold text-xl mb-4 text-gray-900 dark:text-white">📈 Share Your Results</h3>
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-        Share this strategy with your team or refer friends to AgentForge!
+        Share this strategy with your team or refer friends to Planvix!
       </p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <button

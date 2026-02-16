@@ -41,7 +41,7 @@ async def startup_event():
         logger.warning("    -> App will use DEMO MODE for strategy generation.")
 
     # Admin Key Status
-    if settings.ADMIN_SECRET and settings.ADMIN_SECRET != "agentforge-admin-2026-change-now":
+    if settings.ADMIN_SECRET and settings.ADMIN_SECRET != "planvix-admin-2026-change-now":
         logger.info("🔒  Admin Security: CONFIGURED")
     elif settings.ADMIN_SECRET:
          logger.warning("⚠️  Admin Security: USING DEFAULT SECRET (Please change in production)")
