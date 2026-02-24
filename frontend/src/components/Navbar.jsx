@@ -1,10 +1,17 @@
-import { Sparkles, Menu, User, LogOut, Home, Clock, Moon, Sun } from 'lucide-react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
-import { useAuth } from '../App';
-import logoHorizontal from '../assets/branding/logo-horizontal.svg';
-
-
+import {
+  Sparkles,
+  Menu,
+  User,
+  LogOut,
+  Home,
+  Clock,
+  Moon,
+  Sun,
+} from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import logoHorizontal from "../assets/branding/logo-horizontal.svg";
 
 export default function Navbar({ darkMode, toggleDarkMode }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -14,13 +21,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const navLinks = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/planner', label: 'Strategic Planner', icon: Sparkles },
-    { path: '/history', label: 'History', icon: Clock },
+    { path: "/dashboard", label: "Dashboard", icon: Home },
+    { path: "/planner", label: "Strategic Planner", icon: Sparkles },
+    { path: "/history", label: "History", icon: Clock },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -31,17 +38,19 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
         <div className="flex items-center justify-between w-full">
           {/* Logo - Desktop */}
           <Link to="/dashboard" className="hidden md:block">
-            <img 
+            <img
               src={logoHorizontal}
               alt="Planvix Logo"
               className="h-8 w-auto object-contain"
-              style={{filter: 'drop-shadow(0 0 10px rgba(99, 102, 241, 0.3))'}}
+              style={{
+                filter: "drop-shadow(0 0 10px rgba(99, 102, 241, 0.3))",
+              }}
             />
           </Link>
 
           {/* Logo - Mobile */}
           <Link to="/dashboard" className="md:hidden">
-            <img 
+            <img
               src={logoHorizontal}
               alt="Planvix"
               className="h-7 w-auto object-contain"
@@ -58,8 +67,8 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                   to={link.path}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium ${
                     isActive(link.path)
-                      ? 'bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-lg'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? "bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-lg"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -76,9 +85,16 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {user?.email}
               </p>
-              {user?.tier === 'pro' ? (
+              {user?.tier === "pro" ? (
                 <div className="flex items-center justify-end gap-1 text-xs font-bold text-green-600 dark:text-green-400">
-                  <img src="/logo.svg" alt="Pro" className="w-4 h-4" style={{filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.4))'}} />
+                  <img
+                    src="/logo.svg"
+                    alt="Pro"
+                    className="w-4 h-4"
+                    style={{
+                      filter: "drop-shadow(0 2px 4px rgba(16, 185, 129, 0.4))",
+                    }}
+                  />
                   PRO
                 </div>
               ) : (
@@ -110,8 +126,8 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                         onClick={() => setMenuOpen(false)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                           isActive(link.path)
-                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400"
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -129,8 +145,12 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  {darkMode ? 'Light Mode' : 'Dark Mode'}
+                  {darkMode ? (
+                    <Sun className="w-4 h-4" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                  {darkMode ? "Light Mode" : "Dark Mode"}
                 </button>
                 <Link
                   to="/profile"

@@ -49,6 +49,7 @@ import {
 import { AnalyticsService } from "../services/AnalyticsService";
 import { HealthService } from "../services/HealthService";
 import { WebSocketService } from "../services/WebSocketService";
+import { safeDate } from "../utils/dateUtils";
 
 /* ══════════════════════════════════════════════════════════════
    CONSTANTS
@@ -676,9 +677,7 @@ export default function EnterpriseAdminDashboard() {
                             </span>
                           </td>
                           <td className="px-5 py-4 text-slate-500 text-xs font-mono">
-                            {u.created_at
-                              ? new Date(u.created_at).toLocaleDateString()
-                              : "—"}
+                            {safeDate(u.created_at)}
                           </td>
                         </tr>
                       ))
@@ -1061,9 +1060,7 @@ export default function EnterpriseAdminDashboard() {
                         </p>
                       </div>
                       <p className="text-[10px] text-slate-600 font-mono shrink-0">
-                        {log.timestamp
-                          ? new Date(log.timestamp).toLocaleString()
-                          : ""}
+                        {safeDate(log.timestamp, "detailed")}
                       </p>
                     </div>
                   ))}
@@ -1114,10 +1111,7 @@ export default function EnterpriseAdminDashboard() {
                       : "Degraded Performance"}
                   </p>
                   <p className="text-xs opacity-70">
-                    Last checked:{" "}
-                    {health.last_updated
-                      ? new Date(health.last_updated).toLocaleTimeString()
-                      : "—"}
+                    Last checked: {safeDate(health.last_updated, "time")}
                   </p>
                 </div>
               </div>

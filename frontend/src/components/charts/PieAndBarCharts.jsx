@@ -89,13 +89,17 @@ export function TierDistributionPieChart({ data = {} }) {
 }
 
 const BarTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 shadow-2xl">
-      <p className="text-slate-400 text-xs mb-1">{label}</p>
-      <p className="text-white font-bold text-sm">{payload[0]?.value} users</p>
-    </div>
-  );
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 shadow-2xl">
+        <p className="text-slate-400 text-xs mb-1">{label}</p>
+        <p className="text-emerald-400 font-bold text-sm">
+          {payload[0].value} users
+        </p>
+      </div>
+    );
+  }
+  return null;
 };
 
 export function IndustryBarChart({ data = [] }) {
@@ -109,42 +113,50 @@ export function IndustryBarChart({ data = [] }) {
   const chartData = data.map((d) => ({ name: d.industry, value: d.count }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart
-        data={chartData}
-        layout="vertical"
-        margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
-      >
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="#1e293b"
-          horizontal={false}
-        />
-        <XAxis
-          type="number"
-          tick={{ fill: "#64748b", fontSize: 11 }}
-          tickLine={false}
-          axisLine={false}
-        />
-        <YAxis
-          dataKey="name"
-          type="category"
-          width={90}
-          tick={{ fill: "#94a3b8", fontSize: 11 }}
-          tickLine={false}
-          axisLine={false}
-        />
-        <Tooltip
-          content={<BarTooltip />}
-          cursor={{ fill: "rgba(255,255,255,0.04)" }}
-        />
-        <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={20}>
-          {chartData.map((_, i) => (
-            <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="w-full h-[350px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{ top: 20, right: 40, left: 60, bottom: 20 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#1e293b"
+            horizontal={false}
+          />
+          <XAxis
+            type="number"
+            tick={{ fill: "#64748b", fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            dataKey="name"
+            type="category"
+            width={160}
+            tick={{ fill: "#94a3b8", fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <Tooltip
+            content={<BarTooltip />}
+            allowEscapeViewBox={{ x: false, y: false }}
+            cursor={{ fill: "rgba(255,255,255,0.04)" }}
+          />
+          <Bar
+            dataKey="value"
+            radius={[0, 8, 8, 0]}
+            maxBarSize={24}
+            animationDuration={800}
+          >
+            {chartData.map((_, i) => (
+              <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 

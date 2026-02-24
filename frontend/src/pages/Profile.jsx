@@ -1,409 +1,262 @@
-import { useState, useEffect } from 'react';
-import { User, TrendingUp, Settings, CreditCard, AlertTriangle, Mail, Calendar, CheckCircle } from 'lucide-react';
-import { useAuth } from '../App';
-import { authAPI } from '../api';
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import {
+  TrendingUp,
+  Settings,
+  CreditCard,
+  AlertTriangle,
+  RefreshCw,
+  LogOut,
+  User,
+  ShieldCheck,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import ProfileHero from "../components/profile/ProfileHero";
+import UsageCharts from "../components/profile/UsageCharts";
+import ActivityTimeline from "../components/profile/ActivityTimeline";
+import BillingCard from "../components/profile/BillingCard";
+import toast from "react-hot-toast";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function Profile() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('usage');
-  const [profile, setProfile] = useState(null);
+  const { token, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState("intelligence");
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
-  const [name, setName] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Data States
+  const [heroData, setHeroData] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [activityData, setActivityData] = useState([]);
+  const [billingData, setBillingData] = useState(null);
+
+  // Unified Data Fetcher
+  const fetchAllDashboardData = useCallback(
+    async (isAutoRefresh = false) => {
+      if (!token) return;
+      if (!isAutoRefresh) setLoading(true);
+      else setRefreshing(true);
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      try {
+        const [heroRes, analyticsRes, activityRes, billingRes] =
+          await Promise.all([
+            axios.get(`${API_BASE}/api/profile`, { headers }),
+            axios.get(`${API_BASE}/api/profile/analytics`, { headers }),
+            axios.get(`${API_BASE}/api/profile/activity`, { headers }),
+            axios.get(`${API_BASE}/api/profile/billing`, { headers }),
+          ]);
+
+        setHeroData(heroRes.data);
+        setAnalyticsData(analyticsRes.data);
+        setActivityData(activityRes.data);
+        setBillingData(billingRes.data);
+      } catch (error) {
+        console.error("[DASHBOARD] Sync Error:", error);
+        if (!isAutoRefresh) toast.error("Failed to sync intelligence data.");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [token],
+  );
+
+  // Initial Load + 30s Polling
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const response = await authAPI.getProfile();
-      setProfile(response.data);
-      setName(response.data.name || user?.email?.split('@')[0] || 'User');
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Use fallback data
-      setProfile({
-        name: user?.email?.split('@')[0] || 'User',
-        email: user?.email,
-        tier: user?.tier || 'free',
-        usage_month: 0,
-        total_strategies: 0
-      });
-      setName(user?.email?.split('@')[0] || 'User');
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async () => {
-    try {
-      await authAPI.updateProfile({ name });
-      setProfile({ ...profile, name });
-      setEditMode(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
+    fetchAllDashboardData();
+    const interval = setInterval(() => fetchAllDashboardData(true), 30000);
+    return () => clearInterval(interval);
+  }, [fetchAllDashboardData]);
 
   const tabs = [
-    { id: 'usage', label: 'Usage', icon: TrendingUp },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'danger', label: 'Danger Zone', icon: AlertTriangle },
+    { id: "intelligence", label: "Intelligence Hub", icon: TrendingUp },
+    { id: "billing", label: "Usage & Quota", icon: CreditCard },
+    { id: "settings", label: "Global Settings", icon: Settings },
   ];
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Profile Header */}
-        <div className="glass-card p-8 rounded-3xl mb-8 animate-fade-in">
-          <div className="flex items-center gap-6">
-            {/* Avatar */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white text-4xl font-bold shadow-2xl">
-              {(profile?.name || 'U')[0].toUpperCase()}
-            </div>
-            
-            {/* User Info */}
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                {profile?.name || 'User'}
-              </h1>
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* Tier Badge */}
-                {profile?.tier === 'pro' ? (
-                  <span className="px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full text-sm font-bold shadow-lg">
-                    ✨ PRO MEMBER
-                  </span>
-                ) : (
-                  <span className="px-4 py-1.5 bg-gray-600 text-white rounded-full text-sm font-semibold">
-                    FREE TIER
-                  </span>
-                )}
-                
-                {/* Usage Badge */}
-                <span className="text-gray-600 dark:text-gray-400 text-sm">
-                  {profile?.usage_month || 0}/{profile?.tier === 'pro' ? '∞' : '3'} strategies this month
-                </span>
-              </div>
-              
-              {/* Email */}
-              <div className="flex items-center gap-2 mt-3 text-gray-600 dark:text-gray-400">
-                <Mail className="w-4 h-4" />
-                <span>{profile?.email}</span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 p-4 sm:p-8 transition-colors duration-500">
+      <div className="max-w-7xl mx-auto space-y-8 mt-12">
+        {/* Header with Sync Indicator */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              Personal Intelligence Dashboard
+              <ShieldCheck className="w-6 h-6 text-emerald-500" />
+            </h1>
+            <p className="text-slate-500 text-sm font-medium">
+              Real-time performance metrics & activity feed
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchAllDashboardData()}
+              disabled={refreshing}
+              className={`p-2 rounded-xl glass-card transition-all ${refreshing ? "animate-spin border-primary-500" : "hover:scale-105 active:scale-95"}`}
+            >
+              <RefreshCw className="w-5 h-5 text-slate-500" />
+            </button>
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 font-black text-xs uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100 dark:border-rose-900/50"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
           </div>
         </div>
+
+        {/* Hero Section */}
+        <ProfileHero data={heroData} loading={loading} />
 
         {/* Tab Navigation */}
-        <div className="glass-card rounded-3xl overflow-hidden mb-8">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 font-medium transition-all ${
-                    activeTab === tab.id
-                      ? 'text-primary-600 dark:text-primary-400 border-b-3 border-primary-600 bg-primary-50 dark:bg-primary-900/20'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tab Content */}
-          <div className="p-8">
-            {activeTab === 'usage' && <UsageTab profile={profile} />}
-            {activeTab === 'settings' && (
-              <SettingsTab 
-                profile={profile} 
-                name={name}
-                setName={setName}
-                editMode={editMode}
-                setEditMode={setEditMode}
-                updateProfile={updateProfile}
-              />
-            )}
-            {activeTab === 'billing' && <BillingTab profile={profile} />}
-            {activeTab === 'danger' && <DangerZoneTab />}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Usage Tab Component
-function UsageTab({ profile }) {
-  const usageLimit = profile?.tier === 'pro' ? Infinity : 3;
-  const usagePercent = profile?.tier === 'pro' ? 100 : ((profile?.usage_month || 0) / 3) * 100;
-
-  return (
-    <div className="space-y-6">
-      {/* Usage Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* This Month */}
-        <div className="glass-card p-6 rounded-2xl border-2 border-primary-200 dark:border-primary-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">This Month</h3>
-            <Calendar className="w-6 h-6 text-primary-600" />
-          </div>
-          <p className="text-4xl font-bold text-primary-600 mb-2">
-            {profile?.usage_month || 0}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            of {profile?.tier === 'pro' ? 'unlimited' : '3'} strategies
-          </p>
-          {/* Progress Bar */}
-          <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-primary-600 to-accent-600 transition-all"
-              style={{ width: `${Math.min(usagePercent, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Total Strategies */}
-        <div className="glass-card p-6 rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Total Created</h3>
-            <CheckCircle className="w-6 h-6 text-emerald-600" />
-          </div>
-          <p className="text-4xl font-bold text-emerald-600 mb-2">
-            {profile?.total_strategies || 0}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            All time strategies
-          </p>
-        </div>
-
-        {/* Account Status */}
-        <div className="glass-card p-6 rounded-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Account Status</h3>
-            <User className="w-6 h-6 text-accent-600" />
-          </div>
-          <p className="text-2xl font-bold text-accent-600 mb-2">
-            {profile?.tier === 'pro' ? 'Premium' : 'Free'}
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {profile?.tier === 'pro' ? 'Unlimited access' : '3 strategies/month'}
-          </p>
-        </div>
-      </div>
-
-      {/* Upgrade CTA for Free Users */}
-      {profile?.tier !== 'pro' && (
-        <div className="glass-card p-6 rounded-2xl bg-gradient-to-r from-primary-50 to-accent-50 dark:from-primary-900/20 dark:to-accent-900/20 border-2 border-primary-200 dark:border-primary-800">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            Unlock Unlimited Strategies
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Upgrade to Pro for unlimited AI-powered content strategies, priority support, and advanced features.
-          </p>
-          <a
-            href="/upgrade"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-          >
-            Upgrade to Pro - ₹2,400/month
-          </a>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Settings Tab Component
-function SettingsTab({ profile, name, setName, editMode, setEditMode, updateProfile }) {
-  return (
-    <div className="space-y-6">
-      <div className="glass-card p-6 rounded-2xl">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Profile Information</h3>
-        
-        <div className="space-y-4">
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Display Name
-            </label>
-            {editMode ? (
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-premium"
-                placeholder="Your name"
-              />
-            ) : (
-              <p className="text-lg text-gray-900 dark:text-white">{profile?.name || 'Not set'}</p>
-            )}
-          </div>
-
-          {/* Email (Read-only) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email Address
-            </label>
-            <p className="text-lg text-gray-600 dark:text-gray-400">{profile?.email}</p>
-            <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            {editMode ? (
-              <>
-                <button
-                  onClick={updateProfile}
-                  className="px-6 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-                >
-                  Save Changes
-                </button>
-                <button
-                  onClick={() => {
-                    setEditMode(false);
-                    setName(profile?.name || '');
-                  }}
-                  className="px-6 py-2 glass-card rounded-xl font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
+        <div className="flex items-center gap-2 glass-card p-1.5 rounded-2xl w-fit">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
               <button
-                onClick={() => setEditMode(true)}
-                className="px-6 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+                  activeTab === tab.id
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
               >
-                Edit Profile
+                <Icon className="w-4 h-4" />
+                {tab.label}
               </button>
-            )}
-          </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
-  );
-}
 
-// Billing Tab Component
-function BillingTab({ profile }) {
-  return (
-    <div className="space-y-6">
-      {/* Current Plan */}
-      <div className="glass-card p-6 rounded-2xl">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Current Plan</h3>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {profile?.tier === 'pro' ? 'Pro Plan' : 'Free Plan'}
-            </p>
-            <p className="text-gray-600 dark:text-gray-400">
-              {profile?.tier === 'pro' 
-                ? '₹2,400/month - Unlimited strategies' 
-                : '3 strategies per month'}
-            </p>
-          </div>
-          
-          {profile?.tier === 'pro' ? (
-            <span className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full text-sm font-bold">
-              Active
-            </span>
-          ) : (
-            <a
-              href="/upgrade"
-              className="px-6 py-2 bg-gradient-to-r from-primary-600 to-accent-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-            >
-              Upgrade Now
-            </a>
+        {/* Main Content Grid */}
+        <div className="animate-fade-in transition-all duration-500">
+          {activeTab === "intelligence" && (
+            <div className="space-y-8">
+              <UsageCharts analytics={analyticsData} loading={loading} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <ActivityTimeline activity={activityData} loading={loading} />
+                <BillingCard billing={billingData} loading={loading} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "billing" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <BillingCard billing={billingData} loading={loading} />
+              <div className="glass-card p-8 rounded-3xl flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
+                  <ShieldCheck className="w-8 h-8 text-primary-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                  Secure Billing
+                </h3>
+                <p className="text-slate-500 text-sm max-w-xs">
+                  Our billing system uses Razropay's encrypted checkout for 100%
+                  secure transactions.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <SettingsPanel user={heroData} logout={logout} />
           )}
         </div>
       </div>
-
-      {/* Billing Portal (Pro only) */}
-      {profile?.tier === 'pro' && (
-        <div className="glass-card p-6 rounded-2xl">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Manage Subscription</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Update payment method, view invoices, or cancel your subscription through the Razorpay portal.
-          </p>
-          <button
-            onClick={() => window.open('https://razorpay.com', '_blank')}
-            className="px-6 py-2 glass-card rounded-xl font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-          >
-            Open Billing Portal →
-          </button>
-        </div>
-      )}
     </div>
   );
 }
 
-// Danger Zone Tab Component
-function DangerZoneTab() {
+// Sub-component for Settings (Modular & Clean)
+function SettingsPanel({ user, logout }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const handleDeleteAccount = () => {
-    if (confirmDelete) {
-      alert('Account deletion would happen here. This is a demo.');
-      setConfirmDelete(false);
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="glass-card p-6 rounded-2xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10">
-        <div className="flex items-start gap-4">
-          <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Delete Account</h3>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              Once you delete your account, there is no going back. This will permanently delete all your strategies, usage history, and account data.
-            </p>
-            
-            {!confirmDelete ? (
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="px-6 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all"
-              >
-                Delete Account
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <p className="font-semibold text-red-600 dark:text-red-400">
-                  Are you absolutely sure? This action cannot be undone.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="px-6 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-all"
-                  >
-                    Yes, Delete My Account
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(false)}
-                    className="px-6 py-2 glass-card rounded-xl font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
+    <div className="max-w-3xl space-y-8">
+      <div className="glass-card p-8 rounded-3xl border border-slate-100 dark:border-slate-800">
+        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+          Global Preferences
+          <Settings className="w-5 h-5 text-primary-500" />
+        </h3>
+
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+            <div>
+              <p className="text-xs font-black text-slate-400 tracking-tighter uppercase mb-1">
+                Email Identification
+              </p>
+              <p className="text-lg font-bold text-slate-900 dark:text-white">
+                {user?.email}
+              </p>
+            </div>
+            <span className="text-[10px] font-black uppercase text-emerald-500 flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" /> Verified Account
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed">
+            <div>
+              <p className="text-xs font-black text-slate-400 tracking-tighter uppercase mb-1">
+                Password Authentication
+              </p>
+              <p className="text-lg font-bold text-slate-900 dark:text-white">
+                ••••••••••••
+              </p>
+            </div>
+            <button
+              disabled
+              className="text-[10px] font-black uppercase text-slate-400"
+            >
+              Change Password
+            </button>
           </div>
         </div>
+      </div>
+
+      <div className="glass-card p-8 rounded-3xl border border-rose-100 dark:border-rose-950/20 bg-rose-50/20 dark:bg-rose-950/5">
+        <h3 className="text-xl font-black text-rose-600 dark:text-rose-400 mb-6 flex items-center gap-2">
+          Danger Zone
+          <AlertTriangle className="w-5 h-5" />
+        </h3>
+
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 font-medium leading-relaxed">
+          Deleting your account will permanently wipe all generated strategies,
+          historical data, and billing history. This action{" "}
+          <strong>cannot be undone</strong>.
+        </p>
+
+        {!confirmDelete ? (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="px-6 py-3 bg-white dark:bg-slate-900 text-rose-600 border border-rose-100 dark:border-rose-900 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-rose-50 transition-all shadow-xl shadow-rose-900/5"
+          >
+            Initiate Account Deletion
+          </button>
+        ) : (
+          <div className="flex flex-col sm:flex-row items-center gap-3 animate-slide-up">
+            <button
+              onClick={() => {
+                toast.success("Demo: Account deletion is simulated.");
+                logout();
+              }}
+              className="w-full sm:w-auto px-6 py-3 bg-rose-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-rose-700 shadow-xl shadow-rose-900/20"
+            >
+              Confirm Permanent Deletion
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="w-full sm:w-auto px-6 py-3 glass-card text-slate-600 font-extrabold text-xs uppercase tracking-widest rounded-xl"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -130,7 +130,7 @@ class UserResponse(BaseModel):
     id: str  # Changed from int to str for MongoDB ObjectId
     email: str
     tier: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -147,7 +147,7 @@ class StrategyHistoryItem(BaseModel):
     audience: str
     industry: str
     platform: str
-    created_at: datetime
+    created_at: Optional[datetime] = None
     generation_time: Optional[int]
 
     class Config:
@@ -159,3 +159,44 @@ class HistoryResponse(BaseModel):
     success: bool
     strategies: List[StrategyHistoryItem]
     total: int
+
+# ============================================================================
+# DASHBOARD & PROFILE SCHEMAS
+# ============================================================================
+
+class AnalyticsDataPoint(BaseModel):
+    date: str
+    count: int
+
+class TokenUsagePoint(BaseModel):
+    date: str
+    tokens: int
+
+class GrowthTrendPoint(BaseModel):
+    month: str
+    value: int
+
+class ProfileAnalyticsResponse(BaseModel):
+    monthly_strategies: List[AnalyticsDataPoint]
+    token_usage: List[TokenUsagePoint]
+    growth_trend: List[GrowthTrendPoint]
+
+class ActivityItem(BaseModel):
+    type: str
+    timestamp: Optional[datetime] = None
+    title: str
+
+class BillingResponse(BaseModel):
+    plan: str
+    monthly_limit: int
+    used_this_month: int
+    renewal_date: Optional[str] = None
+
+class ProfileHeroResponse(BaseModel):
+    name: str
+    email: str
+    tier: str
+    member_since: Optional[datetime] = None
+    total_strategies: int
+    tokens_used_month: int
+    next_billing_date: Optional[str]

@@ -40,9 +40,7 @@ export function AdminAuthProvider({ children }) {
     setIsLoggingOut(true);
     localStorage.removeItem("admin_token");
     setAdminToken(null);
-    setTimeout(() => {
-      window.location.href = "/admin-login";
-    }, 300);
+    // Removed direct redirect to allow AdminProtectedRoute to handle it reactively
   }, []);
 
   // Auto-logout on 401

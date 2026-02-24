@@ -56,6 +56,8 @@ Unlike generic tools that give you a single "Answer," Planvix employs a **team o
 | **⚡ Real-time Activity**        | WebSocket-powered live activity feed: user signups, strategy events, admin actions.                 |
 | **🔒 JWT Admin Auth**            | Dedicated admin JWT (8h sessions, `role:admin` claim), separate from user auth.                     |
 | **📈 Recharts Dashboards**       | AreaCharts, PieCharts, BarCharts, animated CountUp KPI cards, sparklines.                           |
+| **👤 Intelligence Profile**      | Personal Intelligence Dashboard for users with trend charts, activity feed, and usage capacity.     |
+| **🛡️ System Resilience**         | Global "safeDate" utility & Optional Pydantic schemas to prevent date-parsing crashes.              |
 
 ---
 

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../App";
+import { useAuth } from "../context/AuthContext";
 import {
   Sparkles,
   TrendingUp,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { strategyAPI } from "../api";
+import { safeDate } from "../utils/dateUtils";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -316,8 +317,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="text-xs text-gray-400">
-                    {strategy.created_at &&
-                      new Date(strategy.created_at).toLocaleDateString()}
+                    {safeDate(strategy.created_at)}
                   </div>
                 </button>
               ))}

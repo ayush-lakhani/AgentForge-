@@ -1,43 +1,39 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Sparkles, ArrowRight, Check } from 'lucide-react';
-import { authAPI } from '../api';
-import { useAuth } from '../App';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, Sparkles, ArrowRight, Check } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signup } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     // Validation
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError("Password must be at least 8 characters long");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await authAPI.signup(email, password);
-      const { access_token, user_id, email: userEmail } = response.data;
-      
-      login({ id: user_id, email: userEmail }, access_token);
-      navigate('/dashboard');
+      await signup(email, password);
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || 'Signup failed. Please try again.');
+      setError(err.message || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -132,8 +128,8 @@ export default function Signup() {
               </p>
               <ul className="space-y-2 text-xs text-primary-700 dark:text-primary-300">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  3 free content strategies per month
+                  <Check className="w-4 h-4" />3 free content strategies per
+                  month
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4" />
@@ -169,9 +165,9 @@ export default function Signup() {
           {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
-              <Link 
-                to="/login" 
+              Already have an account?{" "}
+              <Link
+                to="/login"
                 className="font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
               >
                 Sign in
