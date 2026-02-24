@@ -1,263 +1,201 @@
-# Backend - AI Content Strategy Planner
+# Backend — Planvix API Server
 
-FastAPI backend with CrewAI multi-agent system for generating content strategies.
+FastAPI backend with CrewAI multi-agent orchestration, MongoDB storage, Redis caching, WebSocket activity feed, and an enterprise admin intelligence API.
+
+---
 
 ## 🏗️ Architecture
 
-### Core Components
+### File Structure
 
-#### 1. **main.py** - FastAPI Application
-- RESTful API endpoints
-- JWT authentication middleware
-- Redis caching layer
-- Rate limiting (30 req/min)
-- PostgreSQL database integration
-- Error handling & validation
+```
+backend/
+├── app/
+│   ├── core/
+│   │   ├── config.py         # All settings via pydantic-settings
+│   │   ├── mongo.py          # MongoDB client + collection refs
+│   │   └── security.py       # JWT create/verify, get_current_user, get_current_admin
+│   ├── models/
+│   │   └── schemas.py        # Pydantic request/response models
+│   ├── routers/
+│   │   ├── auth.py           # /api/auth/signup, /api/auth/login — broadcasts WS on signup
+│   │   ├── strategy.py       # /api/strategy, /api/history — broadcasts WS on generate/delete
+│   │   ├── admin.py          # /api/admin/* — all endpoints JWT-protected (role:admin)
+│   │   └── health.py         # /api/health — public health check
+│   ├── services/
+│   │   ├── analytics_service.py  # MongoDB aggregation engine (MRR, ARPU, churn, trends)
+│   │   ├── health_service.py     # psutil CPU/memory + MongoDB/Redis ping
+│   │   └── strategy_service.py   # CrewAI strategy generation
+│   ├── websocket/
+│   │   ├── __init__.py
+│   │   └── activity_socket.py    # WS connection manager + broadcast_event() + admin_logs
+│   └── main.py               # FastAPI app, CORS, rate limiting, router registration
+├── run.py                    # Entry point: uvicorn with hot-reload
+└── requirements.txt
+```
 
-#### 2. **crew.py** - CrewAI Agent System
-4 specialized AI agents working sequentially:
-
-**Agent 1: Audience Intelligence Surgeon**
-- Builds deep buyer personas
-- Analyzes psychology & behavior patterns
-- Output: Persona with pain points, desires, objections
-
-**Agent 2: Cultural Trend Sniper**
-- Predicts viral content gaps
-- Analyzes competitor blind spots
-- Output: 5 high-impact opportunities
-
-**Agent 3: Organic Traffic Architect**
-- Builds SEO keyword ladders
-- Focuses on low-competition keywords (KD<25)
-- Output: 10 prioritized keywords with search intent
-
-**Agent 4: Chief Strategy Synthesizer**
-- Creates executable 30-day calendar
-- Generates ready-to-post sample content
-- Output: Calendar + 3 sample posts with captions/hashtags
-
-#### 3. **models.py** - Data Models
-- **Pydantic Models**: API request/response validation
-- **SQLAlchemy Models**: Database tables (User, Strategy)
-- Strict schema enforcement prevents JSON parsing errors
+---
 
 ## 📋 API Endpoints
 
-### Authentication
+### Authentication — Public
+
 ```
-POST /api/auth/signup
-Body: { email, password }
-Response: { access_token, user_id, email }
-
-POST /api/auth/login  
-Body: { email, password }
-Response: { access_token, user_id, email }
-
-GET /api/auth/me
-Headers: Authorization: Bearer <token>
-Response: { id, email, tier, created_at }
+POST /api/auth/signup        { email, password } → { access_token, user_id, email }
+POST /api/auth/login         { email, password } → { access_token, user_id, email }
+GET  /api/auth/me            → { id, email, tier, usage_count, created_at }
 ```
 
-### Strategies
+### Strategies — JWT Protected (`Authorization: Bearer <user_token>`)
+
 ```
-POST /api/strategy
-Headers: Authorization: Bearer <token>
-Body: { goal, audience, industry, platform }
-Response: { success, strategy, cached, generation_time }
-
-GET /api/history
-Headers: Authorization: Bearer <token>
-Response: { strategies: [...], total }
-
-GET /api/strategy/{id}
-Headers: Authorization: Bearer <token>
-Response: { strategy, input, created_at }
-
-DELETE /api/strategy/{id}
-Headers: Authorization: Bearer <token>
-Response: { success, message }
+POST   /api/strategy              Generate strategy (CrewAI / Demo mode)
+GET    /api/history               All strategies for current user
+GET    /api/history/{id}          Single strategy by ID
+DELETE /api/history/{id}          Delete strategy (does NOT restore usage count)
+GET    /api/profile               User profile + usage info
 ```
 
-### System
+### System — Public
+
 ```
-GET /api/health
-Response: { status, database, redis, timestamp }
+GET /api/health               Basic health check
+GET /                         API info + version
+GET /docs                     Swagger UI
 ```
+
+### Admin — JWT Protected (`Authorization: Bearer <admin_token>`, `role:admin` required)
+
+```
+POST /api/admin/login                 { secret } → admin JWT (8h)
+GET  /api/admin/analytics             Full KPI payload (MongoDB aggregations)
+GET  /api/admin/health                MongoDB/Redis latency + CPU/memory/uptime
+GET  /api/admin/users                 Paginated users (search, tier filter, sort)
+GET  /api/admin/users/export          Download CSV
+GET  /api/admin/logs                  Admin action log (admin_logs collection)
+GET  /api/admin/activity              REST fallback for activity feed
+GET  /api/admin/dashboard             Legacy compatibility
+GET  /api/admin/revenue-breakdown     Industry-grouped revenue
+GET  /api/admin/alerts                System alerts
+```
+
+### WebSocket — Admin Feed
+
+```
+WS /ws/admin/activity         Real-time event stream (connect as admin)
+                              — sends last 20 events on connect
+                              — pong on "ping" keepalive messages
+```
+
+---
+
+## 📊 Analytics Engine
+
+`analytics_service.py` uses **pure MongoDB aggregations** — no hardcoded values.
+
+| Metric             | Method                                       |
+| ------------------ | -------------------------------------------- |
+| MRR                | `pro_users × ₹299 + enterprise_users × ₹999` |
+| ARPU               | `MRR / paid_users`                           |
+| Churn Rate         | `cancelled_at >= month_start / total_users`  |
+| MRR Growth         | Previous month comparison                    |
+| Revenue Trend      | 30-day daily group by `created_at`           |
+| User Growth        | 30-day daily group by `created_at`           |
+| Tier Distribution  | `$group` on `tier` field                     |
+| Industry Breakdown | `$group` on `industry` from strategies       |
+| AI Token Usage     | `$sum tokens_used` from strategies           |
+| Daily Tokens       | 7-day `$group` by date                       |
+
+---
+
+## 🔌 WebSocket Activity Feed
+
+`websocket/activity_socket.py` implements:
+
+- **ConnectionManager**: tracks all active WS connections
+- **`broadcast_event(event_type, payload)`**: called from auth/strategy routers, persists to `admin_logs` collection, broadcasts to all connected admin clients
+- **Event types**: `user_signup`, `strategy_generated`, `strategy_deleted`, `admin_login`, `payment_received`
+- **On connect**: sends last 20 events from `admin_logs` for immediate history
+
+---
+
+## 🔐 Security
+
+| Feature          | Detail                                      |
+| ---------------- | ------------------------------------------- |
+| Password hashing | Argon2 via passlib (SHA256 legacy fallback) |
+| User JWTs        | `sub = user_id`, short-lived                |
+| Admin JWTs       | `role = admin`, 8-hour expiry               |
+| Rate limiting    | slowapi — configurable per-minute limit     |
+| CORS             | Configured for frontend origin              |
+| Input validation | Pydantic schemas                            |
+
+---
 
 ## 🔧 Environment Variables
 
-Required in `.env`:
 ```bash
-# API Keys
-GROQ_API_KEY=your_groq_api_key
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/content_planner
-
-# Cache
+MONGODB_URL=mongodb+srv://...
+GROQ_API_KEY=gsk_...
+JWT_SECRET_KEY=change-this-in-production
+ADMIN_SECRET=your-admin-secret
 REDIS_URL=redis://localhost:6379
-
-# Security
-JWT_SECRET_KEY=your-super-secret-jwt-key
-
-# Optional
-ENVIRONMENT=development
+PROJECT_NAME=Planvix
+VERSION=2.0.0
+RATE_LIMIT_PER_MINUTE=30
 ```
+
+---
 
 ## 🚀 Running Locally
 
-### With Docker (Recommended)
-```bash
-# From project root
-docker-compose up
-```
-
-### Manual
 ```bash
 cd backend
 
-# Create virtual environment
+# Create + activate venv
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+venv\Scripts\activate       # Windows
+source venv/bin/activate    # Mac/Linux
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables (see .env.example)
-
-# Run server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+# Run
+python run.py               # → http://localhost:8000
 ```
-
-Server will run at **http://localhost:8000**
-
-## 📊 Database Schema
-
-### Users Table
-```sql
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    hashed_password VARCHAR(255) NOT NULL,
-    tier VARCHAR(50) DEFAULT 'free',
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Strategies Table
-```sql
-CREATE TABLE strategies (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
-    goal VARCHAR(500) NOT NULL,
-    audience VARCHAR(200) NOT NULL,
-    industry VARCHAR(100) NOT NULL,
-    platform VARCHAR(50) NOT NULL,
-    output_data JSON NOT NULL,
-    cache_key VARCHAR(255),
-    generation_time INTEGER,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-## 🔐 Security Features
-
-- **Password Hashing**: Bcrypt with salt rounds
-- **JWT Tokens**: 24-hour expiration
-- **Rate Limiting**: 30 requests/minute per user
-- **CORS**: Configured for frontend origin
-- **Input Validation**: Pydantic schemas
-- **SQL Injection**: Protected by SQLAlchemy ORM
-
-## ⚡ Performance Optimizations
-
-### Redis Caching
-- **Cache Key**: MD5 hash of input (goal + audience + industry + platform)
-- **TTL**: 24 hours
-- **Hit Rate**: ~80% for repeated queries
-- **Response Time**: <100ms on cache hit
-
-### Database Indexing
-- Email (unique index)
-- User ID (foreign key index)
-- Cache key (for fast lookups)
-
-### Async Processing
-- CrewAI agents run sequentially but efficiently
-- Database queries use async SQLAlchemy
-- Non-blocking Redis operations
-
-## 🧪 Testing
-
-```bash
-# Test health endpoint
-curl http://localhost:8000/api/health
-
-# Test signup
-curl -X POST http://localhost:8000/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"SecureP@ss123!"}'
-
-# Test strategy generation
-curl -X POST http://localhost:8000/api/strategy \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "goal": "Sell coffee on Instagram",
-    "audience": "college students",
-    "industry": "F&B",
-    "platform": "Instagram"
-  }'
-```
-
-## 📦 Dependencies
-
-Key packages:
-- **fastapi**: Web framework
-- **uvicorn**: ASGI server
-- **crewai**: Multi-agent orchestration
-- **langchain-groq**: Groq LLM integration
-- **sqlalchemy**: ORM
-- **psycopg2-binary**: PostgreSQL driver
-- **redis**: Cache client
-- **python-jose**: JWT handling
-- **passlib**: Password hashing
-- **razorpay**: Payment processing
-
-## 🐛 Troubleshooting
-
-**Database connection failed**
-- Ensure PostgreSQL is running
-- Check DATABASE_URL format
-- Verify credentials
-
-**Redis connection failed**
-- Ensure Redis is running on port 6379
-- Check REDIS_URL
-
-**CrewAI generation errors**
-- Verify GROQ_API_KEY is set
-- Check Groq API rate limits
-- Review agent logs in terminal
-
-**JWT token invalid**
-- Token expired (24h lifetime)
-- Wrong JWT_SECRET_KEY
-- Token not passed in Authorization header
-
-## 📈 Scaling Considerations
-
-**For Production:**
-- Use managed PostgreSQL (e.g., Render, AWS RDS)
-- Use managed Redis (e.g., Redis Cloud, Upstash)
-- Set JWT_SECRET_KEY to cryptographically secure random string
-- Enable HTTPS only
-- Configure CORS for specific frontend domain
-- Add request logging (e.g., Sentry)
-- Implement connection pooling
-- Add health checks for dependencies
 
 ---
 
-**Backend built with FastAPI + CrewAI** 🚀
+## 📦 Key Dependencies
+
+| Package           | Purpose                   |
+| ----------------- | ------------------------- |
+| `fastapi`         | Web framework             |
+| `uvicorn`         | ASGI server               |
+| `crewai`          | Multi-agent orchestration |
+| `pymongo`         | MongoDB driver            |
+| `motor`           | Async MongoDB (optional)  |
+| `redis`           | Redis cache client        |
+| `python-jose`     | JWT handling              |
+| `passlib[argon2]` | Password hashing          |
+| `slowapi`         | Rate limiting             |
+| `psutil`          | CPU/memory monitoring     |
+| `websockets`      | WebSocket support         |
+
+---
+
+## 🐛 Troubleshooting
+
+**MongoDB connection failed** → Check `MONGODB_URL` in `.env`
+
+**Admin login returns 401** → Verify `ADMIN_SECRET` matches what you enter in the UI
+
+**WebSocket not connecting** → Ensure backend is running on port 8000; check browser console
+
+**CrewAI errors** → Backend falls back to Demo Mode automatically if `GROQ_API_KEY` is missing
+
+**Strategy not generating** → Check `python run.py` terminal for agent logs
+
+---
+
+**Backend: FastAPI 0.100+ • MongoDB • Redis • WebSocket • CrewAI** 🚀

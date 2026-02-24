@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from app.models.schemas import UserCreate, UserLogin, Token, UserResponse
 from app.core.mongo import users_collection
 from app.core.security import get_password_hash, verify_password, create_access_token
+import asyncio
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -13,10 +14,13 @@ async def signup(user_data: UserCreate):
         print(f"❌ [AUTH] Signup Failed: Email already registered ({user_data.email})")
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    current_month = datetime.now(timezone.utc).strftime("%Y-%m")
     user_doc = {
         "email": user_data.email,
         "hashed_password": get_password_hash(user_data.password),
         "tier": "free",
+        "usage_count": 0,
+        "usage_month": current_month,
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -25,6 +29,18 @@ async def signup(user_data: UserCreate):
     
     print(f"✅ [AUTH] Signup Successful: {user_data.email} (ID: {user_id})")
     access_token = create_access_token(data={"sub": user_id})
+
+    # Broadcast live event to admin dashboard
+    try:
+        from app.websocket.activity_socket import broadcast_event
+        asyncio.create_task(broadcast_event("user_signup", {
+            "details": f"New user registered: {user_data.email}",
+            "email": user_data.email,
+            "user_id": user_id,
+        }))
+    except Exception:
+        pass
+
     return Token(access_token=access_token, user_id=user_id, email=user_data.email)
 
 @router.post("/login", response_model=Token)

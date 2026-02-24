@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { adminApi } from '../api';
+import { useState, useCallback } from "react";
+import { adminApi } from "../api";
 
 /**
  * Custom hook for admin dashboard operations
@@ -14,20 +14,6 @@ export const useDashboard = () => {
   const [error, setError] = useState(null);
 
   /**
-   * Set admin secret in localStorage
-   */
-  const setAdminSecret = (secret) => {
-    localStorage.setItem('adminSecret', secret);
-  };
-
-  /**
-   * Clear admin secret from localStorage
-   */
-  const clearAdminSecret = () => {
-    localStorage.removeItem('adminSecret');
-  };
-
-  /**
    * Fetch dashboard statistics
    */
   const fetchDashboardStats = useCallback(async () => {
@@ -38,7 +24,8 @@ export const useDashboard = () => {
       setDashboardStats(data);
       return data;
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to fetch dashboard stats';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to fetch dashboard stats";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -49,7 +36,7 @@ export const useDashboard = () => {
   /**
    * Fetch users list
    */
-  const fetchUsers = useCallback(async (search = '', limit = 20) => {
+  const fetchUsers = useCallback(async (search = "", limit = 20) => {
     setLoading(true);
     setError(null);
     try {
@@ -57,7 +44,8 @@ export const useDashboard = () => {
       setUsers(data.users || []);
       return data;
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to fetch users';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to fetch users";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -76,7 +64,8 @@ export const useDashboard = () => {
       setRevenueBreakdown(data.industries || []);
       return data;
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to fetch revenue breakdown';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to fetch revenue breakdown";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -95,7 +84,8 @@ export const useDashboard = () => {
       setActivity(data.activities || []);
       return data;
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to fetch activity';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to fetch activity";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -114,7 +104,8 @@ export const useDashboard = () => {
       setAlerts(data.alerts || []);
       return data;
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to fetch alerts';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to fetch alerts";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -130,8 +121,6 @@ export const useDashboard = () => {
     alerts,
     loading,
     error,
-    setAdminSecret,
-    clearAdminSecret,
     fetchDashboardStats,
     fetchUsers,
     fetchRevenueBreakdown,

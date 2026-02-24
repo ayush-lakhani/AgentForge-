@@ -8,18 +8,68 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import time
+import asyncio
 
 router = APIRouter(prefix="/api", tags=["Strategy"])
 
 # ============================================================================
-# RATE LIMITING HELPERS
+# FREE-TIER MONTHLY LIMIT (source of truth: User document in MongoDB)
+# ============================================================================
+
+FREE_MONTHLY_LIMIT = 3
+
+def check_monthly_limit(user_id: str, tier: str = "free") -> dict:
+    """
+    Check if free-tier user has exceeded monthly strategy generation limit.
+    Uses usage_count/usage_month from User document (NOT strategy count).
+    Pro/Expert users bypass this limit.
+    """
+    if tier in ("pro", "expert"):
+        return {"exceeded": False, "used": 0, "limit": None}
+    
+    from app.core.mongo import users_collection
+    from bson import ObjectId
+    
+    current_month = datetime.now(timezone.utc).strftime("%Y-%m")
+    user = users_collection.find_one({"_id": ObjectId(user_id)})
+    
+    if not user:
+        return {"exceeded": True, "message": "User not found"}
+    
+    usage_month = user.get("usage_month", "")
+    usage_count = user.get("usage_count", 0)
+    
+    # Monthly reset: if month changed, reset count
+    if usage_month != current_month:
+        users_collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"usage_count": 0, "usage_month": current_month}}
+        )
+        usage_count = 0
+    
+    if usage_count >= FREE_MONTHLY_LIMIT:
+        return {
+            "exceeded": True,
+            "message": f"Free tier limit ({FREE_MONTHLY_LIMIT} strategies/month) reached. Upgrade to Pro for unlimited access.",
+            "used": usage_count,
+            "limit": FREE_MONTHLY_LIMIT
+        }
+    
+    return {
+        "exceeded": False,
+        "used": usage_count,
+        "limit": FREE_MONTHLY_LIMIT
+    }
+
+# ============================================================================
+# BURST RATE LIMITING (anti-abuse: 10 requests per 5-hour window)
 # ============================================================================
 
 FREE_LIMIT = 10
 WINDOW_HOURS = 5
 
 def check_rate_limit(user_id: str, tier: str = "free") -> dict:
-    """Check if user has exceeded rate limit based on tier"""
+    """Check if user has exceeded burst rate limit based on tier"""
     # Define limits based on tier
     if tier == "pro":
         limit = 50
@@ -47,7 +97,7 @@ def check_rate_limit(user_id: str, tier: str = "free") -> dict:
         
         return {
             "exceeded": True,
-            "message": f"{tier.capitalize()} tier limit ({limit}) reached. Resets in {reset_h}h {reset_m}m",
+            "message": f"{tier.capitalize()} tier burst limit ({limit}) reached. Resets in {reset_h}h {reset_m}m",
             "reset_at": reset_time.timestamp(),
             "used": used,
             "limit": limit
@@ -100,7 +150,12 @@ async def generate_strategy(
     user_id = current_user["id"]
     tier = current_user.get("tier", "free")
     
-    # Rate Limiting
+    # 1. Monthly Limit Check (free-tier: 3/month, source of truth: User doc)
+    monthly_info = check_monthly_limit(user_id, tier)
+    if monthly_info["exceeded"]:
+        raise HTTPException(status_code=429, detail=monthly_info)
+    
+    # 2. Burst Rate Limiting (anti-abuse: 10/5hr window)
     rate_info = check_rate_limit(user_id, tier)
     if rate_info["exceeded"]:
         raise HTTPException(status_code=429, detail=rate_info)
@@ -110,8 +165,20 @@ async def generate_strategy(
         result = await strategy_service.create_strategy(user_id, strategy_input)
         
         # Inject usage info into response for frontend convenience
-        result["usage"] = rate_info
+        result["usage"] = monthly_info  # Monthly limit info (source of truth)
+        result["rate_limit"] = rate_info  # Burst rate limit info
         result["tier"] = tier
+
+        # Broadcast live event to admin dashboard
+        try:
+            from app.websocket.activity_socket import broadcast_event
+            asyncio.create_task(broadcast_event("strategy_generated", {
+                "details": f"Strategy for: {(strategy_input.goal or '')[:40]}",
+                "user_id": user_id,
+                "industry": strategy_input.industry or "",
+            }))
+        except Exception:
+            pass
         
         return result
         
@@ -144,6 +211,15 @@ async def delete_strategy(strategy_id: str, current_user: dict = Depends(get_cur
     result = await strategy_service.delete_strategy(strategy_id, current_user["id"])
     if not result["success"]:
         raise HTTPException(status_code=result.get("code", 500), detail=result["message"])
+    # Broadcast live event to admin dashboard
+    try:
+        from app.websocket.activity_socket import broadcast_event
+        asyncio.create_task(broadcast_event("strategy_deleted", {
+            "details": f"Strategy {strategy_id} deleted",
+            "user_id": current_user["id"],
+        }))
+    except Exception:
+        pass
     return result
 
 

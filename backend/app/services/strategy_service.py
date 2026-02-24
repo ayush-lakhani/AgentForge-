@@ -82,8 +82,11 @@ class StrategyService:
         # 5. Update Cache
         self._set_cached_strategy(cache_key, strategy_data)
         
-        # 6. Increment Usage Stats (Redis)
-        self._increment_usage(user_id)
+        # 6. Increment Usage in User document (MongoDB - source of truth)
+        self._increment_usage_mongo(user_id)
+        
+        # 7. Also increment Redis counter (for fast reads, non-authoritative)
+        self._increment_usage_redis(user_id)
 
         return {
             "success": True,
@@ -134,6 +137,10 @@ class StrategyService:
         return strategy_doc
 
     async def delete_strategy(self, strategy_id: str, user_id: str) -> dict:
+        """
+        Soft delete only. Does NOT modify usage_count.
+        Deleting a strategy must never restore usage credits.
+        """
         try:
             result = strategies_collection.update_one(
                 {"_id": ObjectId(strategy_id), "user_id": user_id},
@@ -154,22 +161,80 @@ class StrategyService:
             return {"success": False, "message": "Invalid ID", "code": 400}
 
     async def get_user_usage_stats(self, user_id: str) -> dict:
-        now = datetime.now(timezone.utc)
-        month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        """
+        Read usage_count from User document (source of truth).
+        Falls back to counting strategy documents for legacy users
+        who don't have usage_count/usage_month fields yet.
+        """
+        from app.core.mongo import users_collection
         
-        monthly_usage = strategies_collection.count_documents({
-            "user_id": user_id,
-            "created_at": {"$gte": month_start}
-        })
+        current_month = datetime.now(timezone.utc).strftime("%Y-%m")
         
+        # Read from User document (authoritative source)
+        user = users_collection.find_one({"_id": ObjectId(user_id)})
+        
+        if user and "usage_count" in user:
+            usage_month = user.get("usage_month", "")
+            if usage_month == current_month:
+                usage_count = user.get("usage_count", 0)
+            else:
+                # Month changed — reset usage (lazy reset)
+                users_collection.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"usage_count": 0, "usage_month": current_month}}
+                )
+                usage_count = 0
+        else:
+            # Legacy user: fallback to counting strategy documents
+            # and initialize the usage fields
+            now = datetime.now(timezone.utc)
+            month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+            usage_count = strategies_collection.count_documents({
+                "user_id": user_id,
+                "created_at": {"$gte": month_start}
+            })
+            # Backfill usage fields for this legacy user
+            users_collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"usage_count": usage_count, "usage_month": current_month}}
+            )
+        
+        # Total strategies (all time, for display)
         total_strategies = strategies_collection.count_documents({
             "user_id": user_id
         })
         
         return {
-            "usage_count": monthly_usage,
+            "usage_count": usage_count,
             "total_strategies": total_strategies
         }
+
+    # ========================================================================
+    # USAGE TRACKING HELPERS
+    # ========================================================================
+
+    def _increment_usage_mongo(self, user_id: str):
+        """
+        Atomically increment usage_count in the User document.
+        Handles monthly reset: if usage_month differs from current month,
+        reset count to 1 and update the month.
+        """
+        from app.core.mongo import users_collection
+        
+        current_month = datetime.now(timezone.utc).strftime("%Y-%m")
+        
+        # Try to increment if same month
+        result = users_collection.update_one(
+            {"_id": ObjectId(user_id), "usage_month": current_month},
+            {"$inc": {"usage_count": 1}}
+        )
+        
+        if result.matched_count == 0:
+            # Month changed or fields don't exist — reset to 1
+            users_collection.update_one(
+                {"_id": ObjectId(user_id)},
+                {"$set": {"usage_count": 1, "usage_month": current_month}}
+            )
 
     def _generate_cache_key(self, strategy_input: StrategyInput) -> str:
         version = "v2"
@@ -189,7 +254,8 @@ class StrategyService:
             redis_client.setex(f"strategy:{cache_key}", ttl, json.dumps(strategy))
         except: pass
 
-    def _increment_usage(self, user_id: str):
+    def _increment_usage_redis(self, user_id: str):
+        """Non-authoritative Redis counter for fast reads (optional)."""
         if not redis_client.enabled: return
         try:
             current_month = datetime.now().strftime("%Y-%m")
@@ -198,9 +264,7 @@ class StrategyService:
             new_count = int(current_val) + 1 if current_val else 1
             redis_client.setex(count_key, 86400, new_count)
         except Exception as e:
-            print(f"[WARNING] Failed to increment usage: {e}")
-
-    # _get_next_version moved to versioning_service.py
+            print(f"[WARNING] Failed to increment Redis usage: {e}")
 
 # Singleton
 strategy_service = StrategyService()

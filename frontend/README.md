@@ -1,306 +1,180 @@
-# Frontend - AI Content Strategy Planner
+# Frontend — Planvix React Application
 
-Premium React application with beautiful UI for generating and managing content strategies.
-
-## 🎨 Design Philosophy
-
-### Premium Aesthetics
-- **Glassmorphism**: Semi-transparent cards with backdrop blur
-- **Smooth Gradients**: Primary-to-accent color transitions
-- **Micro-animations**: Fade-ins, slide-ups, hover effects
-- **Dark Mode**: Fully supported with smooth transitions
-- **Responsive**: Mobile-first design (375px - 1920px)
-
-### Color Palette
-```css
-Primary: #0ea5e9 (Sky Blue)
-Accent: #d946ef (Purple)
-Gradients: Linear combinations
-Dark Mode: Gray-900/950 backgrounds
-```
-
-## 📦 Components
-
-### Pages
-- **Login.jsx** - Authentication with email/password
-- **Signup.jsx** - User registration with validation
-- **Dashboard.jsx** - Main hub with stats and quick actions
-- **Generate.jsx** - Strategy generation orchestrator
-- **History.jsx** - Past strategies list with view/delete
-
-### Core Components
-- **StrategyForm.jsx** - Input form with validation
-- **StrategyResults.jsx** - Tabbed results display
-- **AgentTerminal.jsx** - Live agent logs terminal
-
-### Features
-- **App.jsx** - Routing, auth context, dark mode
-- **api.js** - Axios API client with interceptors
-
-## 🚀 Running Locally
-
-### Development Mode
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-```
-
-Access at **http://localhost:5173**
-
-### Production Build
-```bash
-npm run build
-npm run preview
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-Create `.env` file:
-```bash
-VITE_API_URL=http://localhost:8000
-```
-
-### Vite Config
-```javascript
-// vite.config.js
-server: {
-  proxy: {
-    '/api': 'http://localhost:8000'
-  }
-}
-```
-
-## 🎯 User Flows
-
-### Authentication Flow
-1. User lands on `/login`
-2. Enters email/password
-3. API returns JWT token
-4. Token stored in localStorage
-5. Redirect to `/dashboard`
-6. Token auto-attached to all requests
-
-### Strategy Generation Flow
-1. User clicks "Generate" from dashboard
-2. Fills form (goal, audience, industry, platform)
-3. Submits → POST /api/strategy
-4. Agent logs display in real-time
-5. Results show in tabbed interface
-6. User can export or create new
-
-### History Flow
-1. User clicks "History" from dashboard
-2. GET /api/history loads past strategies
-3. Click "View" → loads full strategy
-4. Click "Delete" → removes strategy
-
-## 🧩 Component API
-
-### StrategyForm
-```jsx
-<StrategyForm 
-  onGenerate={(data) => {...}}  // Callback with strategy data
-  setLoading={(bool) => {...}}  // Loading state
-  setAgentLogs={(logs) => {...}} // Agent log updates
-/>
-```
-
-### StrategyResults
-```jsx
-<StrategyResults 
-  strategy={strategyData}  // Complete strategy object
-  onReset={() => {...}}    // Reset to new generation
-/>
-```
-
-### AgentTerminal
-```jsx
-<AgentTerminal 
-  logs={[...]}      // Array of log objects
-  loading={bool}    // Show loading animation
-/>
-```
-
-## 🎨 Custom Styles
-
-### Tailwind Classes
-```css
-.glass-card        /* Glassmorphism card */
-.btn-gradient      /* Gradient button */
-.input-premium     /* Styled input field */
-.transition-smooth /* 300ms transitions */
-```
-
-### Animations
-```css
-.animate-fade-in   /* 0.5s fade in */
-.animate-slide-up  /* 0.5s slide from bottom */
-.animate-shimmer   /* Loading skeleton */
-```
-
-## 📱 Responsive Breakpoints
-
-```
-Mobile:  375px - 639px
-Tablet:  640px - 1023px
-Desktop: 1024px+
-
-Grid: 1 col mobile → 2 cols tablet → 3 cols desktop
-Forms: Full width mobile → max-w-md center desktop
-```
-
-## 🔐 Authentication
-
-### Context API
-```jsx
-const { user, login, logout } = useAuth();
-
-// Login
-login(userData, token);
-
-// Logout
-logout(); // Clears localStorage + state
-
-// Protected Routes
-{user ? <Dashboard /> : <Navigate to="/login" />}
-```
-
-### Token Management
-- Stored in `localStorage.token`
-- Auto-attached via axios interceptor
-- 24-hour expiration
-- Auto-clear on 401 errors
-
-## 🧪 Testing Locally
-
-1. **Start backend**: `docker-compose up` (or manual)
-2. **Start frontend**: `npm run dev`
-3. **Sign up**: Create account at http://localhost:5173/signup
-4. **Generate**: Fill form → Submit → Wait 20-30s
-5. **View results**: Tabs for persona, gaps, keywords, calendar, posts
-6. **Check history**: See all past generations
-
-## 📦 Build & Deploy
-
-### Build for Production
-```bash
-npm run build
-# Output: dist/
-```
-
-### Deploy to Vercel
-
-#### Option 1: CLI
-```bash
-npm i -g vercel
-vercel --prod
-```
-
-#### Option 2: GitHub Integration
-1. Push to GitHub
-2. Import project in Vercel dashboard
-3. Set environment variable: `VITE_API_URL`
-4. Deploy automatically on push
-
-### Environment Variables (Vercel)
-```
-VITE_API_URL=https://your-backend-url.com
-```
-
-### Razorpay Integration
-Ensure you have the Razorpay script in `index.html`:
-```html
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-```
-
-## 🔍 File Structure
-
-```
-frontend/
-├── public/
-│   └── vite.svg
-├── src/
-│   ├── components/
-│   │   ├── Login.jsx
-│   │   ├── Signup.jsx
-│   │   ├── Dashboard.jsx
-│   │   ├── Generate.jsx
-│   │   ├── StrategyForm.jsx
-│   │   ├── StrategyResults.jsx
-│   │   ├── AgentTerminal.jsx
-│   │   └── History.jsx
-│   ├── App.jsx           # Routing + Auth Context
-│   ├── api.js            # API client
-│   ├── index.css         # Tailwind + custom styles
-│   └── main.jsx          # React entry point
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-└── README.md
-```
-
-## 🎨 Design Tokens
-
-### Typography
-```
-Font: 'Inter' (Google Fonts)
-Weights: 300, 400, 500, 600, 700, 800, 900
-```
-
-### Shadows
-```
-Card: shadow-xl (0 20px 25px -5px rgba(0,0,0,0.1))
-Button: shadow-lg (0 10px 15px -3px rgba(0,0,0,0.1))
-```
-
-### Border Radius
-```
-Buttons: rounded-xl (12px)
-Cards: rounded-2xl (16px)
-```
-
-## 🐛 Troubleshooting
-
-**Dark mode not persisting**
-- Check localStorage.darkMode
-- Verify `dark` class on `<html>`
-
-**API requests failing**
-- Check VITE_API_URL
-- Verify backend is running
-- Check CORS configuration
-
-**Routing issues**
-- Ensure vercel.json has SPA rewrite
-- Check React Router setup
-
-**Styles not applying**
-- Run `npm run build` to rebuild
-- Clear browser cache
-- Check Tailwind purge config
-
-## 📈 Performance
-
-### Metrics
-- **First Load**: <2s
-- **Time to Interactive**: <3s
-- **Lighthouse Score**: 90+
-
-### Optimizations
-- Vite's fast HMR
-- Lazy loading images
-- Code splitting per route
-- Tailwind CSS purging
-- Production build minification
+Premium React + Vite SPA with glassmorphism design, Recharts analytics, animated KPI cards, WebSocket live feed, and a full Enterprise Admin Intelligence Dashboard.
 
 ---
 
-**Frontend built with React + Vite + Tailwind** ⚡️
+## 🎨 Design System
+
+- **Glassmorphism**: `bg-slate-900/60 backdrop-blur-xl border border-slate-800/50` cards throughout admin
+- **Dark Theme**: Deep navy (`#020817`) base for admin, animated gradient for user app
+- **Micro-animations**: Tab fades, hover lifts, CountUp number animations
+- **Color Palette**: Emerald (revenue), Blue (users), Violet (AI/enterprise), Amber (ARPU), Rose (churn/danger)
+- **Typography**: Inter from Google Fonts, tabular-nums for financial data
+
+---
+
+## 📦 File Structure
+
+```
+frontend/src/
+├── context/
+│   ├── AdminAuthContext.jsx   # Admin JWT state, adminAxios instance, auto-logout on 401
+│   └── AuthContext.jsx        # User auth context (via useAuth hook)
+├── services/
+│   ├── AnalyticsService.js    # GET /api/admin/analytics, /users, /logs, CSV export
+│   ├── HealthService.js       # GET /api/admin/health
+│   └── WebSocketService.js    # WS lifecycle, exponential-backoff reconnect, ping/pong
+├── components/
+│   ├── charts/
+│   │   ├── RevenueAndUserCharts.jsx  # AreaChart (revenue + user growth)
+│   │   └── PieAndBarCharts.jsx       # Donut (tier), HBar (industry), Bar (AI tokens)
+│   ├── kpi/
+│   │   └── KPICard.jsx               # CountUp + sparkline + growth badge + skeleton
+│   ├── Dashboard.jsx
+│   ├── History.jsx
+│   ├── Navbar.jsx
+│   ├── Login.jsx
+│   ├── Signup.jsx
+│   └── ErrorBoundary.jsx
+├── pages/
+│   ├── AdminDashboard.jsx     # 6-tab enterprise admin panel (complete rebuild)
+│   ├── AdminLogin.jsx         # Glassmorphism login, uses AdminAuthContext
+│   ├── Profile.jsx
+│   ├── Upgrade.jsx
+│   └── TacticalBlueprint.jsx
+├── hooks/
+│   └── useAuth.js
+├── api/
+│   └── adminApi.js
+├── App.jsx                    # Routing, AdminAuthProvider wrapping, AuthContext
+├── index.css                  # Tailwind + custom animations + admin utilities
+└── main.jsx
+```
+
+---
+
+## 🛡️ Admin Intelligence Dashboard
+
+Access at `http://localhost:5173/admin-login`
+
+### Authentication Flow
+
+1. Enter `ADMIN_SECRET` from backend `.env`
+2. Backend issues JWT with `role: admin` claim (8h)
+3. `AdminAuthContext` stores token in `localStorage` as `admin_token`
+4. `adminAxios` automatically attaches `Authorization: Bearer <token>` to all requests
+5. 401 response → auto-logout
+
+### 6 Dashboard Tabs
+
+| Tab                 | Components Used                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Overview**        | 8× `KPICard`, `RevenueLineChart`, `UserGrowthAreaChart`, `TierDistributionPieChart`, `IndustryBarChart` |
+| **Users**           | Paginated table, search, tier filter, `TierBadge`, CSV download                                         |
+| **Revenue**         | Revenue KPIs, charts, per-tier ₹ breakdown                                                              |
+| **AI Intelligence** | Token KPIs, `AITokenTrendChart`, insights cards                                                         |
+| **Live Activity**   | WebSocket event feed, notification bell, admin logs                                                     |
+| **System Health**   | `HealthCard` for MongoDB/Redis/CPU/Memory/Uptime                                                        |
+
+### WebSocket Service
+
+- Auto-reconnect with exponential backoff (2s → 30s max)
+- Ping/pong keepalive every 25 seconds
+- Receives last 20 events on connect (history from `admin_logs`)
+
+---
+
+## 📊 Charts (Recharts)
+
+| Component                  | Chart Type                   | Data Source                       |
+| -------------------------- | ---------------------------- | --------------------------------- |
+| `RevenueLineChart`         | AreaChart with gradient fill | `analytics.revenue_trend`         |
+| `UserGrowthAreaChart`      | AreaChart with gradient fill | `analytics.user_growth`           |
+| `TierDistributionPieChart` | Donut PieChart               | `analytics.tier_distribution`     |
+| `IndustryBarChart`         | Horizontal BarChart          | `analytics.industry_breakdown`    |
+| `AITokenTrendChart`        | Vertical BarChart            | `analytics.ai_usage.daily_tokens` |
+
+---
+
+## 🧩 KPI Card
+
+```jsx
+<KPICard
+  title="Monthly Recurring Revenue"
+  value={4500}          // animated by react-countup
+  prefix="₹"
+  change={12.5}         // % growth — shows TrendingUp/Down badge
+  color="emerald"       // emerald | blue | violet | amber | rose | cyan
+  sparkline={[{v:10},{v:20},...]}  // mini inline chart
+  loading={false}       // shows skeleton when true
+  icon={<DollarSign />}
+/>
+```
+
+---
+
+## 🚀 Running Locally
+
+```bash
+cd frontend
+npm install
+npm run dev    # → http://localhost:5173
+```
+
+---
+
+## 🔧 Environment & Proxy
+
+The Vite dev server proxies `/api` and `/ws` to the backend automatically (configured in `vite.config.js`):
+
+```js
+proxy: {
+  '/api': 'http://localhost:8000',
+  '/ws':  { target: 'ws://localhost:8000', ws: true }
+}
+```
+
+---
+
+## 📦 Key Dependencies
+
+| Package               | Purpose                       |
+| --------------------- | ----------------------------- |
+| `react` + `react-dom` | UI framework                  |
+| `react-router-dom`    | Client-side routing           |
+| `axios`               | HTTP client with interceptors |
+| `recharts`            | Composable SVG charts         |
+| `react-countup`       | Animated number counters      |
+| `lucide-react`        | Icon system                   |
+| `react-hot-toast`     | Toast notifications           |
+| `framer-motion`       | Page/component animations     |
+
+---
+
+## 🎨 CSS Utilities (index.css)
+
+```css
+.animate-fadeIn      /* 0.25s tab transition */
+.animate-fade-in     /* 0.3s legacy */
+.animate-float       /* 3s up-down float */
+.glass-card          /* Glassmorphism card */
+.btn-gradient        /* Gradient action button */
+.tactical-blueprint  /* Rich markdown renderer styles */
+```
+
+---
+
+## 🐛 Troubleshooting
+
+| Issue                           | Fix                                                            |
+| ------------------------------- | -------------------------------------------------------------- |
+| Admin dashboard shows blank     | Check `admin_token` in localStorage; visit `/admin-login`      |
+| Charts empty                    | Generate some strategies first; data requires MongoDB records  |
+| WebSocket shows "Connecting..." | Ensure backend is running, check browser console for WS errors |
+| KPI cards stuck loading         | Check `/api/admin/analytics` returns 200 in Network tab        |
+| 401 on admin routes             | Admin JWT expired (8h); re-login at `/admin-login`             |
+
+---
+
+**Frontend: React 18 + Vite + Tailwind + Recharts + WebSocket** ⚡️

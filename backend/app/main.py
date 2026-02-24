@@ -10,6 +10,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.routers import auth, strategy, health, admin
+from app.websocket.activity_socket import router as ws_router
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"])
@@ -47,7 +48,9 @@ async def startup_event():
          logger.warning("⚠️  Admin Security: USING DEFAULT SECRET (Please change in production)")
     else:
         logger.error("❌  Admin Security: MISSING ADMIN_SECRET")
-        
+    
+    logger.info("🔌  WebSocket Activity Feed: /ws/admin/activity")
+    logger.info("📊  Analytics Engine: MongoDB Aggregation Based")
     logger.info("================================================================")
 
 # Add rate limiter to app
@@ -76,6 +79,7 @@ app.include_router(auth.router)
 app.include_router(strategy.router)
 app.include_router(health.router)
 app.include_router(admin.router)
+app.include_router(ws_router)  # WebSocket activity feed
 
 @app.get("/")
 async def root():

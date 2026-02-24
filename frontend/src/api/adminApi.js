@@ -1,23 +1,31 @@
-import { adminClient } from './client';
+import { adminClient, publicClient } from "./client";
 
 /**
- * Admin API - Uses x-admin-secret header authentication
+ * Admin API — Uses JWT authentication (Bearer token)
  */
 
 export const adminApi = {
   /**
+   * Login with admin secret → receive JWT
+   */
+  login: async (secret) => {
+    const response = await publicClient.post("/api/admin/login", { secret });
+    return response.data;
+  },
+
+  /**
    * Get dashboard statistics
    */
   getDashboardStats: async () => {
-    const response = await adminClient.get('/api/admin/dashboard');
+    const response = await adminClient.get("/api/admin/dashboard");
     return response.data;
   },
 
   /**
    * Get users list with optional search
    */
-  getUsers: async (search = '', limit = 20) => {
-    const response = await adminClient.get('/api/admin/users', {
+  getUsers: async (search = "", limit = 20) => {
+    const response = await adminClient.get("/api/admin/users", {
       params: { search, limit },
     });
     return response.data;
@@ -27,7 +35,7 @@ export const adminApi = {
    * Get revenue breakdown by industry
    */
   getRevenueBreakdown: async () => {
-    const response = await adminClient.get('/api/admin/revenue-breakdown');
+    const response = await adminClient.get("/api/admin/revenue-breakdown");
     return response.data;
   },
 
@@ -35,7 +43,7 @@ export const adminApi = {
    * Get recent activity logs
    */
   getActivity: async () => {
-    const response = await adminClient.get('/api/admin/activity');
+    const response = await adminClient.get("/api/admin/activity");
     return response.data;
   },
 
@@ -43,7 +51,7 @@ export const adminApi = {
    * Get system alerts
    */
   getAlerts: async () => {
-    const response = await adminClient.get('/api/admin/alerts');
+    const response = await adminClient.get("/api/admin/alerts");
     return response.data;
   },
 };

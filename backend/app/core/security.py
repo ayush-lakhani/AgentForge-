@@ -38,9 +38,10 @@ def verify_password(password: str, hashed: str) -> bool:
         # Fallback to legacy check if passlib fails (e.g. unknown hash format)
         return verify_password_sha256(password, hashed)
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict, expires_hours: int = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)
+    hours = expires_hours if expires_hours is not None else settings.ACCESS_TOKEN_EXPIRE_HOURS
+    expire = datetime.now(timezone.utc) + timedelta(hours=hours)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -62,36 +63,24 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     user["id"] = str(user["_id"])
     return user
 
-async def admin_auth(authorization: Optional[str] = Header(None)):
+def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """
-    Admin-only authentication using secret key (NOT user JWT)
-    Separate authentication system for admin panel
+    Admin JWT authentication — decodes token and verifies role == 'admin'.
+    Used as a dependency on all admin routes.
     """
-    if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin authorization required"
-        )
-    
-    # Extract token from "Bearer <token>" format
+    token = credentials.credentials
     try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication scheme"
-            )
-    except ValueError:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization header format"
+            detail="Invalid or expired admin token"
         )
     
-    # Validate admin secret
-    if token != settings.ADMIN_SECRET:
+    if payload.get("role") != "admin":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin secret"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
         )
     
-    return True
+    return payload

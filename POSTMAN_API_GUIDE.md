@@ -1,58 +1,69 @@
-# Postman API Testing Guide - AgentForge
+# Planvix API Guide — Postman / curl Reference
 
-Use this guide to test all the API endpoints of the project in Postman.
-
-**Base URL:** `http://localhost:8000`
+Complete API reference for the Planvix backend. All endpoints base at `http://localhost:8000`.
 
 > [!IMPORTANT]
-> **Signup and Login MUST use the `POST` method.** If you use `GET`, you will get a "405 Method Not Allowed" error.
+> **Signup and Login MUST use the `POST` method.** Using `GET` returns `405 Method Not Allowed`.
 
 > [!TIP]
-> **Handling Variables:** If you see `{{strategy_id}}` in the URL, you must either:
-> 1. Replace it with a real ID (e.g., `6979fa06...`) from your database/History response.
-> 2. Set it as a variable in Postman (right-click the value -> Set as variable).
-> 3. **Note:** Plan ID implementation details can be found in the "Payments (Pro)" section.
+> **Two separate auth systems exist:**
+>
+> - **User auth**: token from `/api/auth/login` — used for `/api/strategy`, `/api/history`, etc.
+> - **Admin auth**: token from `/api/admin/login` — used for ALL `/api/admin/*` endpoints.
 
 ---
 
-## 1. Authentication (Public)
+## 1. User Authentication
 
-### Signup (MUST USE POST)
-*   **Method:** `POST`
-*   **URL:** `{{newbaseurl}}/api/auth/signup`
-*   **Body (JSON):**
+### Signup
+
+- **Method:** `POST`
+- **URL:** `http://localhost:8000/api/auth/signup`
+- **Body (JSON):**
+
 ```json
 {
   "email": "test@example.com",
   "password": "password123"
 }
 ```
+
+- **Response:** `{ "access_token": "eyJ...", "user_id": "...", "email": "..." }`
+- **Side Effect:** Triggers `user_signup` event on the admin WebSocket feed.
 
 ### Login
-*   **Method:** `POST`
-*   **URL:** `{{newbaseurl}}/api/auth/login`
-*   **Body (JSON):**
+
+- **Method:** `POST`
+- **URL:** `http://localhost:8000/api/auth/login`
+- **Body (JSON):**
+
 ```json
 {
   "email": "test@example.com",
   "password": "password123"
 }
 ```
-*   **Note:** Copy the `access_token` from the response for the following requests.
+
+- **Response:** Same as signup. Copy `access_token` for protected requests.
+
+### Get My Profile
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/auth/me`
+- **Header:** `Authorization: Bearer <user_token>`
 
 ---
 
-## 2. Protected Endpoints (Requires Authorization)
-**Header:** `Authorization: Bearer <your_access_token>`
+## 2. Strategy Endpoints (User — JWT Required)
 
-### Get My Profile
-*   **Method:** `GET`
-*   **URL:** `{{newbaseurl}}/api/auth/me`
+**Header for all:** `Authorization: Bearer <user_token>`
 
 ### Generate Strategy
-*   **Method:** `POST`
-*   **URL:** `{{newbaseurl}}/api/strategy`
-*   **Body (JSON):**
+
+- **Method:** `POST`
+- **URL:** `http://localhost:8000/api/strategy`
+- **Body (JSON):**
+
 ```json
 {
   "topic": "Sustainable Fashion",
@@ -61,93 +72,164 @@ Use this guide to test all the API endpoints of the project in Postman.
   "industry": "Fashion",
   "platform": "Instagram",
   "contentType": "Reels",
-  "experience": "beginner" 
+  "experience": "beginner"
 }
 ```
-*   Note: `experience` can be `beginner`, `intermediate`, or `expert`.
 
-### Get History (All Strategies)
-*   **Method:** `GET`
-*   **URL:** `{{newbaseurl}}/api/history`
+- `experience`: `beginner` | `intermediate` | `expert`
+- **Side Effect:** Triggers `strategy_generated` event on admin WebSocket feed.
 
-### Get Strategy Details (By ID)
-*   **Method:** `GET`
-*   **URL:** `{{newbaseurl}}/api/history/{{strategy_id}}`
+### Get All History
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/history`
+
+### Get Single Strategy
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/history/{{strategy_id}}`
 
 ### Delete Strategy
-*   **Method:** `DELETE`
-*   **URL:** `{{newbaseurl}}/api/history/{{strategy_id}}`
+
+- **Method:** `DELETE`
+- **URL:** `http://localhost:8000/api/history/{{strategy_id}}`
+- **Note:** Does NOT restore monthly usage count (intentional SaaS logic).
+- **Side Effect:** Triggers `strategy_deleted` event on admin WebSocket feed.
 
 ---
 
-## 3. User Profile & Feedback
+## 3. System (Public)
 
-### Get Profile Details
-*   **Method:** `GET`
-*   **URL:** `{{newbaseurl}}/profile`
-
-### Update Profile
-*   **Method:** `PUT`
-*   **URL:** `{{newbaseurl}}/profile`
-*   **Body (JSON):**
-```json
-{
-  "name": "Ayush Lakhani",
-  "photo": "https://example.com/photo.jpg"
-}
-```
-
-### Submit Feedback
-*   **Method:** `POST`
-*   **URL:** `{{newbaseurl}}/feedback`
-*   **Body (JSON):**
-```json
-{
-  "strategy_id": "YOUR_STRATEGY_ID",
-  "rating": "up",
-  "comment": "This strategy is amazing!"
-}
-```
-
----
-
-## 4. Health & System
 ### API Health Check
-*   **Method:** `GET`
-*   **URL:** `{{newbaseurl}}/api/health`
 
-### Root Check
-*   **Method:** `GET`
-*   **URL:** `{{newbaseurl}}/`
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/health`
+
+### Root Info
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/`
+
+### Swagger Docs
+
+- Open `http://localhost:8000/docs` in your browser for interactive API testing.
 
 ---
 
-## 5. Payments (Pro)
-### Create Pro Checkout
-*   **Method:** `POST`
-*   **URL:** `{{newbaseurl}}/api/pro-checkout`
-*   **Body (JSON):**
-```json
-{
-  "plan_id": "plan_Q0kX1234567890" 
-}
-```
-> [!NOTE]
-> **Plan ID:** Use `plan_Q0kX1234567890` for **Test Mode**. In Production, use the actual Plan ID from your Razorpay Dashboard.
+## 4. Admin Endpoints (Admin JWT Required)
 
-*   **Response (Success - 200 OK):**
-```json
-{
-  "subscription_id": "sub_1234567890abcdef",
-  "razorpay_key": "rzp_test_..." 
-}
-```
-> [!CAUTION]
-> **Security Warning:** The `razorpay_key` returned here is the **Public (Publishable) Key**. The Secret Key must **NEVER** be returned by this API or exposed to the frontend.
+> [!IMPORTANT]
+> All `/api/admin/*` routes require `Authorization: Bearer <admin_token>` where the token has `role: admin` claim.
+> Obtain the token from `/api/admin/login` using your `ADMIN_SECRET`.
 
-*   **Response (Error - 400 Bad Request):**
+### Admin Login
+
+- **Method:** `POST`
+- **URL:** `http://localhost:8000/api/admin/login`
+- **Body (JSON):**
+
 ```json
 {
-  "detail": "Invalid Plan ID provided."
+  "secret": "your_ADMIN_SECRET_from_env"
 }
 ```
+
+- **Response:** `{ "access_token": "eyJ...", "token_type": "bearer" }`
+- Token is valid for **8 hours**.
+
+---
+
+**Header for all admin requests:** `Authorization: Bearer <admin_token>`
+
+### Full Analytics (KPIs + Charts)
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/analytics`
+- **Returns:** MRR, ARPU, churn rate, user counts, revenue trend (30d), user growth (30d), tier distribution, industry breakdown, AI usage/tokens
+
+### System Health
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/health`
+- **Returns:** MongoDB ping + latency, Redis ping + latency, CPU usage, memory usage, uptime string
+
+### Users (Paginated)
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/users`
+- **Query Params:**
+  - `search=` — filter by email or name
+  - `tier=` — `free` | `pro` | `enterprise` | `all`
+  - `page=1` — page number
+  - `limit=20` — results per page (max 100)
+  - `sort_by=created_at` — sort field
+  - `sort_dir=-1` — `-1` desc, `1` asc
+
+### Export Users CSV
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/users/export`
+- **Response:** `text/csv` file download (all users up to 10,000)
+
+### Admin Logs
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/logs?limit=100`
+- **Returns:** Persistent action log from `admin_logs` MongoDB collection
+
+### Activity Feed (REST Fallback)
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/activity`
+
+### Revenue Breakdown
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/revenue-breakdown`
+
+### Legacy Dashboard Stats
+
+- **Method:** `GET`
+- **URL:** `http://localhost:8000/api/admin/dashboard`
+
+---
+
+## 5. WebSocket — Admin Activity Feed
+
+Connect to the real-time event stream:
+
+```
+ws://localhost:8000/ws/admin/activity
+```
+
+**Behavior:**
+
+- Sends last 20 events from `admin_logs` immediately on connect
+- Pushes live events as JSON:
+
+```json
+{
+  "type": "user_signup",
+  "timestamp": "2026-02-24T10:30:00Z",
+  "time": "10:30:00",
+  "details": "New user registered: user@example.com",
+  "email": "user@example.com",
+  "user_id": "abc123"
+}
+```
+
+**Event types:** `user_signup` | `strategy_generated` | `strategy_deleted` | `admin_login` | `payment_received`
+
+**Keepalive:** Send `"ping"` text — server responds `{"type":"pong"}`
+
+---
+
+## 6. Common Errors
+
+| Code  | Meaning                   | Fix                                |
+| ----- | ------------------------- | ---------------------------------- |
+| `401` | Invalid/expired token     | Re-login and refresh token         |
+| `403` | Admin access required     | Use admin token, not user token    |
+| `422` | Request validation failed | Check Body JSON matches schema     |
+| `429` | Rate limit exceeded       | Wait 1 minute (30 req/min default) |
+| `500` | Server error              | Check backend terminal logs        |

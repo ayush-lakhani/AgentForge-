@@ -1,80 +1,129 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Shield, Lock } from 'lucide-react';
-import { useDashboard } from '../hooks';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Shield, Lock, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import { useAdminAuth } from "../context/AdminAuthContext";
 
 export default function AdminLogin() {
-  const [secret, setSecret] = useState('');
-  const [error, setError] = useState('');
+  const [secret, setSecret] = useState("");
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { adminLogin } = useAdminAuth();
   const navigate = useNavigate();
-  const { setAdminSecret, fetchDashboardStats, loading } = useDashboard();
 
-  const login = async () => {
-    if (!secret.trim()) {
-      setError('Please enter admin secret');
-      return;
-    }
-
-    setError('');
-    
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
-      // Set the admin secret in localStorage
-      setAdminSecret(secret);
-      
-      // Try to fetch dashboard stats to verify the secret
-      await fetchDashboardStats();
-      
-      // If successful, navigate to admin dashboard
-      navigate('/admin');
+      await adminLogin(secret);
+      navigate("/admin");
     } catch (err) {
-      setError(err.message || '❌ Invalid Admin Secret');
+      setError(err.response?.data?.detail || "Invalid admin secret.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-8">
-      <div className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl p-12 w-full max-w-md shadow-3xl animate-float-in">
-        <div className="text-center mb-12">
-          <div className="w-24 h-24 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl">
-            <Shield className="w-14 h-14 text-white" />
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{
+        background:
+          "linear-gradient(135deg, #020817 0%, #0a1628 50%, #040d1a 100%)",
+      }}
+    >
+      {/* Radial glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px]
+          bg-emerald-500/5 rounded-full blur-3xl"
+        />
+      </div>
+
+      {/* Grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      <div className="relative w-full max-w-md animate-fadeIn">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-emerald-500/30">
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-black text-white mb-4">Admin Portal</h1>
-          <p className="text-white/80 text-xl">Secret key access only</p>
+          <h1 className="text-2xl font-black text-white">Planvix Admin</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Intelligence System Portal
+          </p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-2xl text-red-200 text-center">
-            {error}
-          </div>
-        )}
+        {/* Card */}
+        <div className="bg-slate-900/80 border border-slate-800/60 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Admin Secret Key
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type={show ? "text" : "password"}
+                  value={secret}
+                  onChange={(e) => setSecret(e.target.value)}
+                  placeholder="Enter admin secret..."
+                  required
+                  className="w-full pl-10 pr-12 py-3 bg-slate-800/60 border border-slate-700/50 rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:bg-slate-800 transition-all text-sm font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow(!show)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  {show ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-        <div className="relative mb-8">
-          <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
-          <input
-            type="password"
-            value={secret}
-            onChange={(e) => setSecret(e.target.value)}
-            placeholder="Enter admin secret key"
-            className="w-full pl-14 pr-6 py-6 bg-white/20 backdrop-blur-sm border border-white/30 rounded-3xl text-white placeholder-white/70 text-lg focus:outline-none focus:border-emerald-500 transition-all"
-            onKeyPress={(e) => e.key === 'Enter' && login()}
-            disabled={loading}
-          />
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !secret.trim()}
+              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500
+                disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all duration-200
+                flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Authenticating…
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" /> Access Dashboard
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-slate-600 mt-6">
+            🔒 Secured by JWT · Sessions expire in 8h
+          </p>
         </div>
-
-        <button
-          onClick={login}
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black py-6 px-8 rounded-3xl text-xl shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? '🔄 Validating...' : '🚀 Enter Dashboard'}
-        </button>
-
-        <p className="text-white/60 text-sm text-center mt-6">
-          Separate from user login system
-        </p>
-        <p className="text-white/40 text-xs text-center mt-2">
-          Default: planvix-admin-2026-change-now
-        </p>
       </div>
     </div>
   );

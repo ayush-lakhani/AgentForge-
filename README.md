@@ -1,88 +1,207 @@
 <div align="center">
-  <img src="frontend/public/logo.png" width="120" alt="AgentForge Logo"/>
-  <h1><b>🚀 AgentForge</b></h1>
+  <img src="frontend/public/logo.png" width="120" alt="Planvix Logo"/>
+  <h1><b>🚀 Planvix</b></h1>
   <p>
-    <strong>AI-Powered Content Strategy Generator</strong>
+    <strong>Multi-Agent AI Content Strategy OS</strong>
   </p>
   <p>
-    <em>Generate Complete Content Strategies in 30 Seconds</em>
+    <em>Orchestrating 5 Autonomous Agents to Build Your Entire Marketing Strategy</em>
   </p>
-  
+
   <img src="https://img.shields.io/badge/Status-Production%20Ready-00D4AA?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/React%2018-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
-  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
-  <img src="https://img.shields.io/badge/MRR%20Target-₹1Cr-FFD700?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/CrewAI-Orchestration-FF4F00?style=for-the-badge&logo=openai&logoColor=white" />
+  <img src="https://img.shields.io/badge/LLaMA%203.3-70B-blue?style=for-the-badge&logo=meta&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-High%20Performance-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/MongoDB-Scalable-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/Admin-Intelligence%20System-6366f1?style=for-the-badge&logo=databricks&logoColor=white" />
 </div>
 
 <p align="center">
-  <a href="#-live-demo">📱 Live Demo</a> •
-  <a href="#-features">✨ Features</a> •
-  <a href="#-quickstart">⚡ Quickstart</a> •
+  <a href="#-about-planvix">🎯 About</a> •
+  <a href="#-key-features">✨ Features</a> •
   <a href="#-architecture">🏗️ Architecture</a> •
+  <a href="#-admin-intelligence-system">🛡️ Admin System</a> •
+  <a href="#-quickstart">⚡ Quickstart</a> •
   <a href="#-pricing">💳 Pricing</a>
 </p>
 
 ---
 
-## 🎯 About AgentForge
+## 🎯 About Planvix
 
-**AgentForge generates complete content marketing strategies in 30 seconds** for any industry, platform, and audience. Built with multi-agent AI orchestration, FastAPI backend, and React frontend.
+**Planvix is not just another wrapper.** It is a **Multi-Agent Operating System** that decomposes the complex task of content strategy into a pipeline of specialized autonomous agents, backed by a full **Enterprise SaaS Admin Intelligence System** for operators.
+
+Unlike generic tools that give you a single "Answer," Planvix employs a **team of 5 expert agents** (Psychology, Trends, SEO, Strategy, ROI) working in sequence to build a cohesive, data-backed executable plan.
 
 **Perfect for:**
-- 🎬 **Content Creators** - YouTube, Instagram, LinkedIn strategies
-- 🚀 **Solo Founders** - Scaling to ₹1Cr MRR
-- 🏢 **Agencies** - Serving Fashion, SaaS, E-commerce clients
-- 🎯 **Marketers** - Data-driven content planning
 
-### 🎥 See It In Action
-
-> **45,000+ strategies generated** | **2,500+ active users** | **97% satisfaction rate**
+- 🎬 **Content Creators** - Scaling from 0 to 1 consistently.
+- 🚀 **Founders** - Automating the CMO role.
+- 🏢 **Agencies** - Delivering premium strategies in minutes, not weeks.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| 🎯 **AI Strategy Generation** | ✅ Production | Complete 30-day content plans in 30 seconds |
-| 👥 **Audience Personas** | ✅ Production | 3 detailed psychological profiles per strategy |
-| 🔍 **Competitor Analysis** | ✅ Production | 5 high-impact market gaps identified |
-| 📊 **SEO Keywords** | ✅ Production | 10+ optimized keywords with hashtags |
-| 📅 **Content Calendar** | ✅ Production | 30-day posting schedule with hooks & CTAs |
-| 📝 **Sample Posts** | ✅ Production | Ready-to-use content with image prompts |
-| 💰 **ROI Predictions** | ✅ Production | Traffic lift & engagement forecasts |
-| 🛡️ **Admin Dashboard** | ✅ Production | MRR, DAU, user analytics |
-| 💳 **Razorpay Payments** | ✅ Production | UPI, Cards, Net Banking (India-ready) |
-| 📱 **Mobile Responsive** | ✅ Production | Perfect on all devices |
+| Feature                          | Description                                                                                         |
+| :------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **🤖 Multi-Agent Orchestration** | 5 autonomous agents collaborating sequentially (Persona → Trends → Traffic → Synthesis → ROI).      |
+| **🧠 Deep Psychology**           | **Persona Agent** builds detailed avatars with pain points, triggers, and aspirations.              |
+| **📈 Trend Sniper**              | **Trend Agent** identifies real-time market gaps and viral hook angles.                             |
+| **🔍 SEO Architecture**          | **Traffic Agent** extracts high-volume keywords and hashtag stacks.                                 |
+| **📅 Tactical Blueprint**        | **Synthesis Agent** generates a 30-day execution calendar and content pillars.                      |
+| **💰 ROI Prediction**            | **ROI Agent** forecasts traffic lift, engagement boost, and reach estimates.                        |
+| **🛡️ Enterprise Admin**          | Full Admin Intelligence System with real-time WebSocket feed, MongoDB analytics, health monitoring. |
+| **📊 Analytics Engine**          | MRR, ARPU, Churn Rate, User Growth, Tier Distribution — all from live MongoDB aggregations.         |
+| **⚡ Real-time Activity**        | WebSocket-powered live activity feed: user signups, strategy events, admin actions.                 |
+| **🔒 JWT Admin Auth**            | Dedicated admin JWT (8h sessions, `role:admin` claim), separate from user auth.                     |
+| **📈 Recharts Dashboards**       | AreaCharts, PieCharts, BarCharts, animated CountUp KPI cards, sparklines.                           |
+
+---
+
+## 🏗️ Architecture
+
+Planvix follows a modular **N-Tier Architecture** with a dedicated Admin Intelligence layer:
+
+```mermaid
+graph TD
+    classDef layer fill:#0f172a,stroke:#334155,stroke-width:2px,color:#e2e8f0
+    classDef db fill:#1e293b,stroke:#334155,stroke-width:2px,color:#e2e8f0
+    classDef admin fill:#052e16,stroke:#15803d,stroke-width:2px,color:#86efac
+
+    subgraph Client_Side [Frontend Layer - React + Vite]
+        UI[User Interface]
+        Auth[AuthContext]
+        AdminCtx[AdminAuthContext]
+        Charts[Recharts Charts]
+        WS_Client[WebSocket Client]
+    end
+
+    subgraph Server_Side [Backend Layer - FastAPI]
+        Router[API Routers]
+        AdminRouter[Admin Router - 9 endpoints]
+        WS_Server[WebSocket Activity Feed]
+
+        subgraph Orchestration [CrewAI Multi-Agent Layer]
+            Orch[CrewAI Orchestrator]
+            Agents[5 Agent Pool]
+        end
+
+        subgraph Services [Service Layer]
+            Analytics[AnalyticsService - MongoDB Aggregations]
+            Health[HealthService - psutil + ping]
+        end
+    end
+
+    subgraph External [External Services]
+        Groq[Groq LLM API]
+    end
+
+    subgraph Data [Data Layer]
+        MongoDB[(MongoDB Atlas)]
+        Redis[(Redis Cache)]
+    end
+
+    UI --> Auth
+    Auth --> Router
+    AdminCtx --> AdminRouter
+    WS_Client --> WS_Server
+    Router --> Orch
+    Orch --> Agents
+    Agents --> Groq
+    AdminRouter --> Analytics
+    AdminRouter --> Health
+    Analytics --> MongoDB
+    Health --> MongoDB
+    Health --> Redis
+    Router --> MongoDB
+    Router --> Redis
+    WS_Server --> MongoDB
+
+    class UI,Auth,AdminCtx,Charts,WS_Client layer
+    class Router,AdminRouter,WS_Server,Orch,Agents,Analytics,Health layer
+    class MongoDB,Redis db
+```
+
+---
+
+## 🛡️ Admin Intelligence System
+
+A production-grade SaaS admin dashboard comparable to Stripe/Vercel dashboards.
+
+### Admin Login
+
+```
+POST /api/admin/login
+Body: { "secret": "your_admin_secret" }
+Response: { "access_token": "eyJ...", "token_type": "bearer" }
+```
+
+Navigate to `http://localhost:5173/admin-login` and enter your `ADMIN_SECRET`.
+
+### Dashboard Tabs
+
+| Tab                 | What it shows                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| **Overview**        | 8 KPI cards (MRR, Users, Strategies, ARPU, Churn, Tier counts) + 4 Recharts charts  |
+| **Users**           | Server-side search/filter/pagination, per-user tokens & revenue, CSV export         |
+| **Revenue**         | MRR trend, ARPU, churn, industry revenue breakdown, tier breakdown with ₹ revenue   |
+| **AI Intelligence** | Total tokens, requests, cost estimate, daily usage chart, most active industry/mode |
+| **Live Activity**   | Real-time WebSocket event feed, notification bell, persisted admin_logs             |
+| **System Health**   | MongoDB/Redis latency, CPU/memory (psutil), uptime, overall status banner           |
+
+### WebSocket Activity Feed
+
+Events broadcast automatically on: User signup → Strategy generated → Strategy deleted → Admin login
+
+```
+ws://localhost:8000/ws/admin/activity
+```
 
 ---
 
 ## ⚡ Quickstart
 
-Get AgentForge running in **under 60 seconds**:
+Get Planvix running in **under 60 seconds**:
+
+### 1️⃣ Clone Repository
 
 ```bash
-# 1️⃣ Clone Repository
 git clone https://github.com/ayush-lakhani/stratify-ai.git
 cd stratify-ai
+```
 
-# 2️⃣ Backend Setup
+### 2️⃣ Backend Setup
+
+_Requires Python 3.11+_
+
+```bash
 cd backend
+python -m venv venv
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
+
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your MongoDB URL and API keys
-python main.py
+# Edit .env — set MONGODB_URL, GROQ_API_KEY, JWT_SECRET_KEY, ADMIN_SECRET
+python run.py
+```
 
-# 3️⃣ Frontend Setup (New Terminal)
+### 3️⃣ Frontend Setup
+
+```bash
 cd frontend
 npm install
 npm run dev
-
-# 4️⃣ Open AgentForge
-# Visit: http://localhost:5173
-# First strategy generates in 30 seconds! 🎉
 ```
+
+### 4️⃣ Launch
+
+| URL                                 | Purpose                |
+| ----------------------------------- | ---------------------- |
+| `http://localhost:5173`             | Main app (user-facing) |
+| `http://localhost:5173/admin-login` | Admin dashboard login  |
+| `http://localhost:8000/docs`        | FastAPI Swagger UI     |
 
 ---
 
@@ -91,326 +210,64 @@ npm run dev
 <div align="center">
 
 ### Frontend
+
 ![React](https://img.shields.io/badge/React%2018-61DAFB?style=flat-square&logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
-![CSS3](https://img.shields.io/badge/Vanilla%20CSS-1572B6?style=flat-square&logo=css3&logoColor=white)
-![React Router](https://img.shields.io/badge/React%20Router-CA4245?style=flat-square&logo=react-router&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Recharts](https://img.shields.io/badge/Recharts-22d3ee?style=flat-square&logo=chartdotjs&logoColor=white)
+![Lucide](https://img.shields.io/badge/Lucide%20Icons-f59e0b?style=flat-square)
 
 ### Backend
+
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python%203.11-3776AB?style=flat-square&logo=python&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-Real--time-10b981?style=flat-square)
+![CrewAI](https://img.shields.io/badge/CrewAI-Orchestrator-FF4F00?style=flat-square)
+![psutil](https://img.shields.io/badge/psutil-System%20Monitor-6366f1?style=flat-square)
 
-### AI & Payments
-![Groq](https://img.shields.io/badge/Groq%20LLM-FF6B6B?style=flat-square)
-![Razorpay](https://img.shields.io/badge/Razorpay-0C2451?style=flat-square&logo=razorpay&logoColor=white)
+### Data & AI
 
-### Deployment
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
-![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=flat-square&logo=railway&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?style=flat-square&logo=redis&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-LPU-FF6B6B?style=flat-square)
 
 </div>
 
 ---
 
-## 🏗️ Architecture
+## 🔧 Environment Variables
 
-```mermaid
-graph TB
-    User[👤 User] --> React[⚛️ React Frontend]
-    React --> FastAPI[🚀 FastAPI Backend]
-    FastAPI --> Demo[🤖 Demo Strategy Generator]
-    FastAPI --> MongoDB[(📊 MongoDB)]
-    FastAPI --> Redis[(⚡ Redis Cache)]
-    FastAPI --> Razorpay[💳 Razorpay]
-    
-    Demo --> Strategy[📋 Complete Strategy]
-    Strategy --> Personas[👥 3 Personas]
-    Strategy --> Gaps[🔍 5 Competitor Gaps]
-    Strategy --> Keywords[📊 10+ Keywords]
-    Strategy --> Calendar[📅 30-Day Calendar]
-    Strategy --> Posts[📝 Sample Posts]
-    Strategy --> ROI[💰 ROI Predictions]
-    
-    style User fill:#00D4AA
-    style React fill:#61DAFB
-    style FastAPI fill:#009688
-    style MongoDB fill:#47A248
-    style Strategy fill:#FFD700
+```bash
+# .env (backend)
+MONGODB_URL=mongodb+srv://...
+GROQ_API_KEY=gsk_...
+JWT_SECRET_KEY=your-super-secret-key-change-in-production
+ADMIN_SECRET=your-admin-secret          # Used to log into /admin-login
+REDIS_URL=redis://localhost:6379
+PROJECT_NAME=Planvix
+VERSION=2.0.0
+RATE_LIMIT_PER_MINUTE=30
 ```
 
 ---
 
 ## 💳 Pricing
 
-<div align="center">
-
-| Tier | Strategies/Month | Price | Features |
-|------|------------------|-------|----------|
-| **🆓 Free** | 3 | ₹0 | Core AI features, History, Export |
-| **⭐ Pro** | Unlimited | **₹499/mo** | Priority support, Advanced analytics |
-| **🏢 Enterprise** | Unlimited | **₹4,999/mo** | White-label, API access, Team workspaces |
-
-</div>
-
-> **💡 India-First Pricing** - Pay with UPI, Cards, Net Banking via Razorpay
-
----
-
-## 📸 Showcase
-
-<!-- 
-### Strategy Generation (30 seconds)
-![Strategy Generation Demo](./screenshots/strategy-demo.gif)
-
-### 6-Tab Tactical Blueprint
-![Tactical Blueprint](./screenshots/tactical-blueprint.png)
-
-### Admin Dashboard (MRR & Analytics)
-![Admin Dashboard](./screenshots/admin-dashboard.png)
-
-### Mobile Responsive Design
-![Mobile View](./screenshots/mobile-responsive.png)
--->
-
----
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create `.env` files in both `backend/` and `frontend/`:
-
-**Backend `.env`:**
-```bash
-# MongoDB
-MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/agentforge
-
-# AI API Keys (Optional - Demo mode works without)
-GROQ_API_KEY=gsk_...
-CREW_AI_ENABLED=false
-
-# Authentication
-JWT_SECRET_KEY=your-super-secret-key-change-in-production
-
-# Payments (Razorpay India)
-RAZORPAY_KEY_ID=rzp_test_...
-RAZORPAY_KEY_SECRET=...
-RAZORPAY_PLAN_ID=plan_...
-
-# Admin
-ADMIN_SECRET=agentforge-admin-2026-change-this
-
-# Server
-PORT=8000
-```
-
-**Frontend `.env`:**
-```bash
-VITE_API_URL=http://localhost:8000
-```
-
----
-
-## 🚀 Deployment
-
-### Production (Vercel + Railway)
-
-**Frontend (Vercel):**
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-cd frontend
-vercel --prod
-```
-
-**Backend (Railway):**
-```bash
-# Install Railway CLI
-npm i -g @railway/cli
-
-# Deploy
-cd backend
-railway login
-railway init
-railway up
-```
-
-### Docker Deployment
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Access at http://localhost:3000
-```
-
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| **Blank React page** | `rm -rf node_modules && npm install` |
-| **Backend won't start** | Check Python version (3.11 recommended, 3.13 has CrewAI issues) |
-| **CORS errors** | Ensure backend is running on port 8000 |
-| **MongoDB connection failed** | Verify `MONGODB_URL` in `.env` |
-| **Usage counter shows 0/3** | Fixed in latest version - pull latest changes |
-| **Tactical Blueprint tab empty** | Fixed - ensure using latest backend code |
-| **Upgrade modal keeps appearing** | Clear browser session storage |
-| **Python 3.13 compatibility** | Use Python 3.11 or accept Demo Generator mode |
-
----
-
-## 📊 Admin Dashboard Metrics
-
-Access admin panel at `/admin` with secret key:
-
-- ✅ **Active Users** (DAU/WAU/MAU)
-- ✅ **Recent Signups** (7/30 days)
-- ✅ **MRR & ARPU**
-- ✅ **Strategies Generated**
-- ✅ **User Tier Breakdown**
-- ✅ **Revenue Analytics**
-
----
-
-## 🔧 Recent Updates (February 2026)
-
-### Critical Bug Fixes
-- ✅ Fixed Tactical Blueprint tab data extraction
-- ✅ Fixed Dashboard usage counter (was showing 0/3)
-- ✅ Fixed Strategic Planner counter accuracy
-- ✅ Fixed upgrade modal infinite loop
-- ✅ Added Python 3.13 compatibility with Demo Generator
-
-### Improvements
-- ✅ Monthly usage tracking (accurate strategy counting)
-- ✅ All 6 tabs working (Tactical Blueprint, Personas, Keywords, Calendar, Posts, ROI)
-- ✅ Enhanced error handling and notifications
-- ✅ Optimized database queries with indexing
-
-### Performance
-- ✅ Strategy generation: **< 30 seconds**
-- ✅ API response: **< 200ms** (cached)
-- ✅ Database queries: **< 100ms**
-
----
-
-## 🎯 Roadmap
-
-- [x] Demo Strategy Generator (Python 3.13 Compatible)
-- [x] Pro Tier with Razorpay Integration (₹499/mo)
-- [x] Monthly Usage Tracking & Limits
-- [x] Strategy History Management
-- [x] Tactical Blueprint 6-Tab View
-- [x] Admin Dashboard with Analytics
-- [ ] CrewAI Elite Re-enablement (Python 3.11)
-- [ ] Real-time Collaboration Mode
-- [ ] Team Workspace Hierarchy
-- [ ] White-label Strategy Exports
-- [ ] API Access for Developers
-- [ ] Mobile Apps (iOS/Android)
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how:
-
-1. **Fork** the repository
-2. **Create** your feature branch: `git checkout -b feature/amazing-feature`
-3. **Commit** your changes: `git commit -m 'feat(dashboard): add user analytics chart'`
-4. **Push** to the branch: `git push origin feature/amazing-feature`
-5. **Open** a Pull Request
-
-### Commit Convention
-```
-feat(scope): add new feature
-fix(scope): bug fix
-docs(scope): documentation update
-style(scope): formatting changes
-refactor(scope): code restructuring
-test(scope): add tests
-chore(scope): maintenance tasks
-```
+| Tier              | Strategies/Month | Price       | Features                                    |
+| :---------------- | :--------------- | :---------- | :------------------------------------------ |
+| **🆓 Starter**    | 3                | ₹0          | Core Agents, History Access                 |
+| **⭐ Pro**        | Unlimited        | **₹299/mo** | All Agents, Priority Queue, ROI Predictions |
+| **🏢 Enterprise** | Custom           | **₹999/mo** | White-label, API Access, Team Seats         |
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **FastAPI** - Lightning-fast Python framework
-- **React** - Modern UI library
-- **MongoDB** - Flexible NoSQL database
-- **Groq** - Ultra-fast LLM inference
-- **Razorpay** - India's payment gateway
-- **Vercel & Railway** - Seamless deployment
-
----
-
-## 🇮🇳 Made in India
-
-<div align="center">
-  <img src="https://img.shields.io/badge/Made%20in-Bengaluru%2C%20India-FF9933?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Target-₹1Cr%20MRR-00D4AA?style=for-the-badge" />
-</div>
-
----
-
-## 🚀 Connect & Support
-
-<div align="center">
-  <a href="https://twitter.com/ayushlakhani">
-    <img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" />
-  </a>
-  <a href="mailto:ayush@agentforge.ai">
-    <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" />
-  </a>
-  <a href="https://linkedin.com/in/ayushlakhani">
-    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" />
-  </a>
-  <a href="https://github.com/ayush-lakhani/stratify-ai">
-    <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" />
-  </a>
-</div>
+This project is licensed under the **MIT License**.
 
 ---
 
 <div align="center">
-  <h3>⚡ Agents Build Strategies • 🇮🇳 Made in Bengaluru • 🎯 Targeting ₹1Cr MRR</h3>
-  <p><strong>Built with ❤️ by Ayush Lakhani</strong></p>
-  <p><em>Transforming content strategy from hours to seconds</em></p>
-</div>
-
----
-
-## 📈 ProductHunt Launch Stats
-
-<div align="center">
-
-| Metric | Target | Current |
-|--------|--------|---------|
-| **Upvotes** | #1 Product of the Day | 🎯 Launching Soon |
-| **Active Users** | 10,000 | 2,500+ |
-| **Strategies Generated** | 100,000 | 45,000+ |
-| **MRR** | ₹1 Crore | Growing 📈 |
-
-</div>
-
-> **🚀 ProductHunt Launch:** Coming Soon - Follow for updates!
-
----
-
-<div align="center">
-  <sub>⭐ Star this repo if you find it helpful!</sub>
+  <h3>⚡ LLaMA 3.3 70B • 📊 Enterprise Admin • 🇮🇳 Made in India</h3>
+  <p><strong>Developed by Ayush Lakhani</strong></p>
 </div>
