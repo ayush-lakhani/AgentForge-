@@ -8,157 +8,127 @@
     <em>Orchestrating 5 Autonomous Agents to Build Your Entire Marketing Strategy</em>
   </p>
 
-  <img src="https://img.shields.io/badge/Status-Production%20Ready-00D4AA?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/CrewAI-Orchestration-FF4F00?style=for-the-badge&logo=openai&logoColor=white" />
-  <img src="https://img.shields.io/badge/LLaMA%203.3-70B-blue?style=for-the-badge&logo=meta&logoColor=white" />
-  <img src="https://img.shields.io/badge/FastAPI-High%20Performance-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
-  <img src="https://img.shields.io/badge/MongoDB-Scalable-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
-  <img src="https://img.shields.io/badge/Admin-Intelligence%20System-6366f1?style=for-the-badge&logo=databricks&logoColor=white" />
+  <img src="https://img.shields.io/badge/Status-Internship--Ready%20|%20Production-00D4AA?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Architecture-Service%20Oriented-6366f1?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Security-RBAC%20|%20JWT-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Performance-Redis%20|%20Async-DC382D?style=for-the-badge" />
 </div>
 
 <p align="center">
   <a href="#-about-planvix">🎯 About</a> •
   <a href="#-key-features">✨ Features</a> •
   <a href="#-architecture">🏗️ Architecture</a> •
-  <a href="#-admin-intelligence-system">🛡️ Admin System</a> •
-  <a href="#-quickstart">⚡ Quickstart</a> •
-  <a href="#-pricing">💳 Pricing</a>
+  <a href="#-industrial-grade-security">🛡️ Security</a> •
+  <a href="#-analytics-engine">📊 Analytics</a> •
+  <a href="#-quickstart">⚡ Quickstart</a>
 </p>
 
 ---
 
 ## 🎯 About Planvix
 
-**Planvix is not just another wrapper.** It is a **Multi-Agent Operating System** that decomposes the complex task of content strategy into a pipeline of specialized autonomous agents, backed by a full **Enterprise SaaS Admin Intelligence System** for operators.
+**Planvix is a Production-Grade, Internship-Ready Multi-Agent AI Content Strategy OS.** It is built using a modern, scalable architecture designed for real-world startup deployment and high-stakes engineering interviews.
 
-Unlike generic tools that give you a single "Answer," Planvix employs a **team of 5 expert agents** (Psychology, Trends, SEO, Strategy, ROI) working in sequence to build a cohesive, data-backed executable plan.
-
-**Perfect for:**
-
-- 🎬 **Content Creators** - Scaling from 0 to 1 consistently.
-- 🚀 **Founders** - Automating the CMO role.
-- 🏢 **Agencies** - Delivering premium strategies in minutes, not weeks.
+Unlike generic LLM wrappers, Planvix implements a **Decoupled Layered Architecture** (Router → Service → Data) with strict **Role-Based Access Control (RBAC)**, real-time synchronization, and high-performance data processing.
 
 ---
 
-## ✨ Key Features
+## ✨ Key Features (Startup-Grade)
 
-| Feature                          | Description                                                                                         |
-| :------------------------------- | :-------------------------------------------------------------------------------------------------- |
-| **🤖 Multi-Agent Orchestration** | 5 autonomous agents collaborating sequentially (Persona → Trends → Traffic → Synthesis → ROI).      |
-| **🧠 Deep Psychology**           | **Persona Agent** builds detailed avatars with pain points, triggers, and aspirations.              |
-| **📈 Trend Sniper**              | **Trend Agent** identifies real-time market gaps and viral hook angles.                             |
-| **🔍 SEO Architecture**          | **Traffic Agent** extracts high-volume keywords and hashtag stacks.                                 |
-| **📅 Tactical Blueprint**        | **Synthesis Agent** generates a 30-day execution calendar and content pillars.                      |
-| **💰 ROI Prediction**            | **ROI Agent** forecasts traffic lift, engagement boost, and reach estimates.                        |
-| **🛡️ Enterprise Admin**          | Full Admin Intelligence System with real-time WebSocket feed, MongoDB analytics, health monitoring. |
-| **📊 Analytics Engine**          | MRR, ARPU, Churn Rate, User Growth, Tier Distribution — all from live MongoDB aggregations.         |
-| **⚡ Real-time Activity**        | WebSocket-powered live activity feed: user signups, strategy events, admin actions.                 |
-| **🔒 JWT Admin Auth**            | Dedicated admin JWT (8h sessions, `role:admin` claim), separate from user auth.                     |
-| **📈 Recharts Dashboards**       | AreaCharts, PieCharts, BarCharts, animated CountUp KPI cards, sparklines.                           |
-| **👤 Intelligence Profile**      | Personal Intelligence Dashboard for users with trend charts, activity feed, and usage capacity.     |
-| **🛡️ System Resilience**         | Global "safeDate" utility & Optional Pydantic schemas to prevent date-parsing crashes.              |
+| Feature                       | Industrial Application                                                                            |
+| :---------------------------- | :------------------------------------------------------------------------------------------------ |
+| **🏗️ Layered Architecture**   | Full separation of concerns using the **Service Pattern**. Clean, testable, and scalable.         |
+| **🔒 Enterprise Auth & RBAC** | JWT-based security with claims for `user`, `admin`, and `superadmin`. Backend-enforced filtering. |
+| **📊 Analytics Intelligence** | Complex MongoDB Aggregation Pipelines for MRR, Churn, and KPIs. Cached via **Redis** for speed.   |
+| **⚡ Real-time WebSockets**   | Live activity feeds and generation status updates using a centralized WebSocket manager.          |
+| **🛡️ Global Stability Layer** | React Error Boundaries + Defensive Rendering + Axios Interceptors. **Zero Blank Screens.**        |
+| **🤖 Multi-Agent Engine**     | 5 specialized CrewAI agents (Persona, Trend, Traffic, Synthesis, ROI) for tactical depth.         |
+| **📈 Intelligence Profiles**  | Per-user billing, token usage tracking, and trend analysis—fully database-driven.                 |
 
 ---
 
-## 🏗️ Architecture
+---
 
-Planvix follows a modular **N-Tier Architecture** with a dedicated Admin Intelligence layer:
+## 🏗️ Clean Layered Architecture
+
+Planvix follows a strict **Decoupled Architecture** designed for high availability and ease of testing. This structure is a primary talking point for engineering interviews as it demonstrates a deep understanding of the **SOLID principles**.
 
 ```mermaid
 graph TD
-    classDef layer fill:#0f172a,stroke:#334155,stroke-width:2px,color:#e2e8f0
-    classDef db fill:#1e293b,stroke:#334155,stroke-width:2px,color:#e2e8f0
-    classDef admin fill:#052e16,stroke:#15803d,stroke-width:2px,color:#86efac
+    classDef router fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#fff
+    classDef service fill:#0f172a,stroke:#8b5cf6,stroke-width:2px,color:#fff
+    classDef data fill:#052e16,stroke:#10b981,stroke-width:2px,color:#fff
 
-    subgraph Client_Side [Frontend Layer - React + Vite]
-        UI[User Interface]
-        Auth[AuthContext]
-        AdminCtx[AdminAuthContext]
-        Charts[Recharts Charts]
-        WS_Client[WebSocket Client]
+    subgraph API_Layer [Routers - Request/Response]
+        R1[Auth Router]
+        R2[Strategy Router]
+        R3[Admin Router]
     end
 
-    subgraph Server_Side [Backend Layer - FastAPI]
-        Router[API Routers]
-        AdminRouter[Admin Router - 9 endpoints]
-        WS_Server[WebSocket Activity Feed]
-
-        subgraph Orchestration [CrewAI Multi-Agent Layer]
-            Orch[CrewAI Orchestrator]
-            Agents[5 Agent Pool]
-        end
-
-        subgraph Services [Service Layer]
-            Analytics[AnalyticsService - MongoDB Aggregations]
-            Health[HealthService - psutil + ping]
-        end
+    subgraph Logic_Layer [Services - Business Logic]
+        S1[AuthService]
+        S2[UsageService]
+        S3[AnalyticsService]
+        S4[StrategyService]
     end
 
-    subgraph External [External Services]
-        Groq[Groq LLM API]
+    subgraph Data_Layer [Infrastructure]
+        M[(MongoDB Atlas)]
+        R[(Redis Caching)]
     end
 
-    subgraph Data [Data Layer]
-        MongoDB[(MongoDB Atlas)]
-        Redis[(Redis Cache)]
-    end
+    R1 --> S1
+    R2 --> S2
+    R2 --> S4
+    R3 --> S3
+    S1 --> M
+    S2 --> M
+    S3 --> M
+    S3 --> R
+    S4 --> M
 
-    UI --> Auth
-    Auth --> Router
-    AdminCtx --> AdminRouter
-    WS_Client --> WS_Server
-    Router --> Orch
-    Orch --> Agents
-    Agents --> Groq
-    AdminRouter --> Analytics
-    AdminRouter --> Health
-    Analytics --> MongoDB
-    Health --> MongoDB
-    Health --> Redis
-    Router --> MongoDB
-    Router --> Redis
-    WS_Server --> MongoDB
-
-    class UI,Auth,AdminCtx,Charts,WS_Client layer
-    class Router,AdminRouter,WS_Server,Orch,Agents,Analytics,Health layer
-    class MongoDB,Redis db
+    class R1,R2,R3 router
+    class S1,S2,S3,S4 service
+    class M,R data
 ```
+
+### Why this architecture?
+
+- **Separation of Concerns**: Business logic is isolated from the HTTP transport layer.
+- **Scalability**: Heavy analytics are performed via MongoDB Aggregation Pipelines and cached in Redis.
+- **Security**: Centralized **Auth Dependencies** ensure every request is validated before reaching the logic layer.
 
 ---
 
-## 🛡️ Admin Intelligence System
+## 🛡️ Industrial-Grade Security
 
-A production-grade SaaS admin dashboard comparable to Stripe/Vercel dashboards.
+| Security Layer           | Implementation                                                                       |
+| :----------------------- | :----------------------------------------------------------------------------------- |
+| **🔐 Role-Based Access** | Strict RBAC with `client`, `admin`, and `superadmin` tiers.                          |
+| **🎟️ JWT Claims**        | Stateless authentication using signed JWTs with explicit role and expiry data.       |
+| **🛑 Rate Limiting**     | SlowAPI integration to prevent brute-force attacks on auth endpoints.                |
+| ** Password Hashing**    | `Bcrypt` with salt rounds for production-safe credential storage.                    |
+| **🚫 Backend Filtering** | Zero trust for frontend `user_id`. Every filter is extracted from the JWT sub claim. |
 
-### Admin Login
+---
 
-```
-POST /api/admin/login
-Body: { "secret": "your_admin_secret" }
-Response: { "access_token": "eyJ...", "token_type": "bearer" }
-```
+## 📊 Analytics Engine (High-Performance)
 
-Navigate to `http://localhost:5173/admin-login` and enter your `ADMIN_SECRET`.
+Planvix doesn't just store data; it analyzes it. Our analytics engine is built on **MongoDB Aggregation Pipelines** to provide real-time business intelligence without overloading the application.
 
-### Dashboard Tabs
+- **KPI Metrics**: MRR, ARPU, and Churn calculated on-the-fly.
+- **Trend Detection**: Growth trends and AI usage distribution.
+- **Redis Caching**: Heavy KPIs are cached for **60 seconds** to ensure sub-100ms response times.
 
-| Tab                 | What it shows                                                                       |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| **Overview**        | 8 KPI cards (MRR, Users, Strategies, ARPU, Churn, Tier counts) + 4 Recharts charts  |
-| **Users**           | Server-side search/filter/pagination, per-user tokens & revenue, CSV export         |
-| **Revenue**         | MRR trend, ARPU, churn, industry revenue breakdown, tier breakdown with ₹ revenue   |
-| **AI Intelligence** | Total tokens, requests, cost estimate, daily usage chart, most active industry/mode |
-| **Live Activity**   | Real-time WebSocket event feed, notification bell, persisted admin_logs             |
-| **System Health**   | MongoDB/Redis latency, CPU/memory (psutil), uptime, overall status banner           |
+---
 
-### WebSocket Activity Feed
+## ⚡ Real-Time Synchronization
 
-Events broadcast automatically on: User signup → Strategy generated → Strategy deleted → Admin login
+We use **WebSockets** to provide a "live" feel across the platform:
 
-```
-ws://localhost:8000/ws/admin/activity
-```
+- **Generation Feed**: Watch agents build your strategy in real-time.
+- **Admin Activity**: Live notifications for signups and strategy events.
+- **Auto-Reconnect**: Robust frontend socket service with exponential backoff.
 
 ---
 
@@ -166,30 +136,24 @@ ws://localhost:8000/ws/admin/activity
 
 Get Planvix running in **under 60 seconds**:
 
-### 1️⃣ Clone Repository
+### 1️⃣ Clone & Setup
 
 ```bash
 git clone https://github.com/ayush-lakhani/stratify-ai.git
 cd stratify-ai
 ```
 
-### 2️⃣ Backend Setup
-
-_Requires Python 3.11+_
+### 2️⃣ Backend (FastAPI + Redis)
 
 ```bash
 cd backend
 python -m venv venv
-# Windows: venv\Scripts\activate
-# Mac/Linux: source venv/bin/activate
-
+source venv/bin/activate # or venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-# Edit .env — set MONGODB_URL, GROQ_API_KEY, JWT_SECRET_KEY, ADMIN_SECRET
 python run.py
 ```
 
-### 3️⃣ Frontend Setup
+### 3️⃣ Frontend (React + Vite)
 
 ```bash
 cd frontend

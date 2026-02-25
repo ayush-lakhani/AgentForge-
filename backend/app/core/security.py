@@ -39,48 +39,15 @@ def verify_password(password: str, hashed: str) -> bool:
         return verify_password_sha256(password, hashed)
 
 def create_access_token(data: dict, expires_hours: int = None) -> str:
+    """
+    Creates a signed JWT.
+    Standard claims:
+    - sub: user_id
+    - role: user role (admin, client, etc)
+    - exp: expiry time
+    """
     to_encode = data.copy()
     hours = expires_hours if expires_hours is not None else settings.ACCESS_TOKEN_EXPIRE_HOURS
     expire = datetime.now(timezone.utc) + timedelta(hours=hours)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    from app.core.mongo import users_collection
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    user = users_collection.find_one({"_id": ObjectId(user_id)})
-    if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
-    
-    user["id"] = str(user["_id"])
-    return user
-
-def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """
-    Admin JWT authentication — decodes token and verifies role == 'admin'.
-    Used as a dependency on all admin routes.
-    """
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired admin token"
-        )
-    
-    if payload.get("role") != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-    
-    return payload
