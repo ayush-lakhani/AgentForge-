@@ -9,7 +9,7 @@
 
   <img src="https://img.shields.io/badge/Status-Internship--Ready%20|%20Production-00D4AA?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Architecture-Service%20Oriented-6366f1?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Security-RBAC%20|%20JWT-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Security-RBAC%20|%20Header--Auth-red?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Performance-Redis%20|%20Async-DC382D?style=for-the-badge" />
 </div>
 
@@ -34,15 +34,15 @@ Unlike generic LLM wrappers, Planvix implements a **Decoupled Layered Architectu
 
 ## ✨ Key Features (Startup-Grade)
 
-| Feature                       | Industrial Application                                                                            |
-| :---------------------------- | :------------------------------------------------------------------------------------------------ |
-| **🏗️ Layered Architecture**   | Full separation of concerns using the **Service Pattern**. Clean, testable, and scalable.         |
-| **🔒 Enterprise Auth & RBAC** | JWT-based security with claims for `user`, `admin`, and `superadmin`. Backend-enforced filtering. |
-| **📊 Analytics Intelligence** | Complex MongoDB Aggregation Pipelines for MRR, Churn, and KPIs. Cached via **Redis** for speed.   |
-| **⚡ Real-time WebSockets**   | Live activity feeds and generation status updates using a centralized WebSocket manager.          |
-| **🛡️ Global Stability Layer** | React Error Boundaries + Defensive Rendering + Axios Interceptors. **Zero Blank Screens.**        |
-| **🤖 Multi-Agent Engine**     | 5 specialized CrewAI agents (Persona, Trend, Traffic, Synthesis, ROI) for tactical depth.         |
-| **📈 Intelligence Profiles**  | Per-user billing, token usage tracking, and trend analysis—fully database-driven.                 |
+| Feature                       | Industrial Application                                                                                 |
+| :---------------------------- | :----------------------------------------------------------------------------------------------------- |
+| **🏗️ Layered Architecture**   | Full separation of concerns using the **Service Pattern**. Clean, testable, and scalable.              |
+| **🔒 Dual-Layer Auth & RBAC** | JWT for users + `x-admin-secret` header for admin. Separated auth flows with zero cross-contamination. |
+| **📊 Analytics Intelligence** | Complex MongoDB Aggregation Pipelines for MRR, Churn, and KPIs. Cached via **Redis** for speed.        |
+| **⚡ Real-time WebSockets**   | Live activity feeds and generation status updates using a centralized WebSocket manager.               |
+| **🛡️ Global Stability Layer** | React Error Boundaries + Defensive Rendering + Axios Interceptors. **Zero Blank Screens.**             |
+| **🤖 Multi-Agent Engine**     | 5 specialized CrewAI agents (Persona, Trend, Traffic, Synthesis, ROI) for tactical depth.              |
+| **📈 Intelligence Profiles**  | Per-user billing, token usage tracking, and trend analysis—fully database-driven.                      |
 
 ---
 
@@ -101,13 +101,14 @@ graph TD
 
 ## 🛡️ Industrial-Grade Security
 
-| Security Layer           | Implementation                                                                       |
-| :----------------------- | :----------------------------------------------------------------------------------- |
-| **🔐 Role-Based Access** | Strict RBAC with `client`, `admin`, and `superadmin` tiers.                          |
-| **🎟️ JWT Claims**        | Stateless authentication using signed JWTs with explicit role and expiry data.       |
-| **🛑 Rate Limiting**     | SlowAPI integration to prevent brute-force attacks on auth endpoints.                |
-| ** Password Hashing**    | `Bcrypt` with salt rounds for production-safe credential storage.                    |
-| **🚫 Backend Filtering** | Zero trust for frontend `user_id`. Every filter is extracted from the JWT sub claim. |
+| Security Layer                   | Implementation                                                                                      |
+| :------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| **🔐 Role-Based Access**         | Strict RBAC with `client`, `admin`, and `superadmin` tiers.                                         |
+| **🎟️ User JWT Auth**             | Stateless user sessions via signed JWTs with explicit role and expiry data.                         |
+| **🔑 Admin Header Auth**         | Admin access via `x-admin-secret` custom header, validated server-side. No JWT cross-contamination. |
+| **🛑 Rate Limiting**             | SlowAPI integration to prevent brute-force attacks on auth endpoints.                               |
+| **🔒 Password Hashing**          | `Bcrypt` with salt rounds for production-safe credential storage.                                   |
+| **🚫 Backend Trust-Zero Filter** | Zero trust for frontend `user_id`. Every filter extracted from JWT `sub` claim on the backend.      |
 
 ---
 

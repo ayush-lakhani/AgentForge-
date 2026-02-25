@@ -4,7 +4,9 @@ All metrics computed dynamically. Zero hardcoded values.
 """
 from datetime import datetime, timezone, timedelta
 from app.core.mongo import strategies_collection, users_collection, db
+from app.core.redis import redis_client
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,14 @@ class AnalyticsService:
     # MAIN ANALYTICS PAYLOAD
     # ════════════════════════════════════════════════════════
     async def get_analytics(self) -> dict:
+        cache_key = "admin:analytics:overview"
+        cached = redis_client.get(cache_key)
+        if cached:
+            try:
+                return json.loads(cached)
+            except Exception:
+                pass
+
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         prev_month_start = (month_start - timedelta(days=1)).replace(day=1)
@@ -230,11 +240,14 @@ class AnalyticsService:
                 "total_tokens": total_tokens if total_tokens else total_requests * 800,
                 "daily_tokens": daily_tokens,
                 "cost_estimate": cost_estimate,
-                "total_requests": total_requests,
                 "most_active_industry": most_active_industry,
                 "most_used_mode": most_used_mode,
             }
         }
+        
+        # Cache for 60 seconds
+        redis_client.set(cache_key, json.dumps(result), ex=60)
+        return result
 
     # ════════════════════════════════════════════════════════
     # USERS (server-side search / filter / pagination)
@@ -371,6 +384,68 @@ class AnalyticsService:
 
     async def get_system_alerts(self) -> list:
         return []
+
+    # ════════════════════════════════════════════════════════
+    # USER SPECIFIC ANALYTICS
+    # ════════════════════════════════════════════════════════
+    async def get_user_analytics(self, user_id: str) -> dict:
+        """Compute analytics for a specific user"""
+        cache_key = f"user:analytics:{user_id}"
+        cached = redis_client.get(cache_key)
+        if cached:
+            try:
+                return json.loads(cached)
+            except Exception:
+                pass
+
+        now = datetime.now(timezone.utc)
+        thirty_days_ago = now - timedelta(days=30)
+        
+        # Strategies count
+        total_strategies = strategies_collection.count_documents({"user_id": user_id, "is_deleted": {"$ne": True}})
+        
+        # Industry breakdown for user
+        industry_pipeline = [
+            {"$match": {"user_id": user_id, "industry": {"$exists": True, "$ne": None}}},
+            {"$group": {"_id": "$industry", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]
+        industries = _safe_list(strategies_collection.aggregate(industry_pipeline))
+        
+        # Token usage trend
+        token_trend_pipeline = [
+            {"$match": {"user_id": user_id, "created_at": {"$gte": thirty_days_ago}}},
+            {"$group": {
+                "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+                "tokens": {"$sum": {"$ifNull": ["$tokens_used", 800]}},
+                "count": {"$sum": 1}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+        usage_history = [
+            {"date": r["_id"], "tokens": r["tokens"], "strategies": r["count"]}
+            for r in _safe_list(strategies_collection.aggregate(token_trend_pipeline))
+        ]
+        
+        # Totals
+        token_sum_pipeline = [
+            {"$match": {"user_id": user_id}},
+            {"$group": {"_id": None, "total": {"$sum": {"$ifNull": ["$tokens_used", 0]}}}}
+        ]
+        token_sum_raw = _safe_list(strategies_collection.aggregate(token_sum_pipeline))
+        total_tokens = token_sum_raw[0]["total"] if token_sum_raw else total_strategies * 800
+
+        return {
+            "total_strategies": total_strategies,
+            "total_tokens": total_tokens,
+            "usage_history": usage_history,
+            "top_industries": [{"industry": r["_id"], "count": r["count"]} for r in industries],
+            "most_active_industry": industries[0]["_id"] if industries else "N/A"
+        }
+        
+        # Cache user metrics for 60 seconds
+        redis_client.set(cache_key, json.dumps(result), ex=60)
+        return result
 
 
 PRO_PRICE = 299

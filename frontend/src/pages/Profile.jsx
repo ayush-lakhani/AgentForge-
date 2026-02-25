@@ -15,6 +15,7 @@ import ProfileHero from "../components/profile/ProfileHero";
 import UsageCharts from "../components/profile/UsageCharts";
 import ActivityTimeline from "../components/profile/ActivityTimeline";
 import BillingCard from "../components/profile/BillingCard";
+import ErrorBoundary from "../components/ErrorBoundary";
 import toast from "react-hot-toast";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -44,7 +45,7 @@ export default function Profile() {
         const [heroRes, analyticsRes, activityRes, billingRes] =
           await Promise.all([
             axios.get(`${API_BASE}/api/profile`, { headers }),
-            axios.get(`${API_BASE}/api/profile/analytics`, { headers }),
+            axios.get(`${API_BASE}/api/analytics/profile`, { headers }),
             axios.get(`${API_BASE}/api/profile/activity`, { headers }),
             axios.get(`${API_BASE}/api/profile/billing`, { headers }),
           ]);
@@ -78,7 +79,7 @@ export default function Profile() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 p-4 sm:p-8 transition-colors duration-500">
+    <div className="min-h-screen bg-slate-50 dark:bg-gray-950 p-4 sm:p-8 transition-colors duration-500 premium-fade">
       <div className="max-w-7xl mx-auto space-y-8 mt-12">
         {/* Header with Sync Indicator */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -138,7 +139,9 @@ export default function Profile() {
         <div className="animate-fade-in transition-all duration-500">
           {activeTab === "intelligence" && (
             <div className="space-y-8">
-              <UsageCharts analytics={analyticsData} loading={loading} />
+              <ErrorBoundary>
+                <UsageCharts analytics={analyticsData} loading={loading} />
+              </ErrorBoundary>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ActivityTimeline activity={activityData} loading={loading} />
                 <BillingCard billing={billingData} loading={loading} />

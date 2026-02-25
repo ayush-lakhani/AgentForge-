@@ -131,9 +131,9 @@ export default function EnterpriseAdminDashboard() {
   const env = import.meta.env.MODE === "production" ? "PROD" : "DEV";
 
   /* ── Auth guard ─────────────────────────────── */
-  const token = localStorage.getItem("admin_token");
+  const secret = localStorage.getItem("adminSecret");
   useEffect(() => {
-    if (!token) {
+    if (!secret) {
       navigate("/admin-login");
       return;
     }
@@ -147,7 +147,7 @@ export default function EnterpriseAdminDashboard() {
 
   /* ── WebSocket activity feed ────────────────── */
   useEffect(() => {
-    if (!token) return;
+    if (!secret) return;
     WebSocketService.connect((evt) => {
       setWsConnected(true);
       if (evt.type === "pong") return;
@@ -218,7 +218,7 @@ export default function EnterpriseAdminDashboard() {
   }, []);
 
   const logout = () => {
-    localStorage.removeItem("admin_token");
+    localStorage.removeItem("adminSecret");
     WebSocketService.disconnect();
     navigate("/admin-login");
   };

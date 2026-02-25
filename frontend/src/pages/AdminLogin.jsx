@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAdminAuth } from "../context/AdminAuthContext";
+import { adminAPI } from "../api/adminAPI";
 import AuthLayout from "../components/auth/AuthLayout";
 import AuthCard from "../components/auth/AuthCard";
 import AnimatedButton from "../components/auth/AnimatedButton";
@@ -16,13 +17,26 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    if (!secret.trim()) {
+      setError("Please enter admin secret");
+      return;
+    }
+
     try {
-      await adminLogin(secret);
-      navigate("/admin");
+      setError("");
+      setLoading(true);
+
+      // Store secret first
+      localStorage.setItem("adminSecret", secret);
+
+      // Validate secret with backend
+      await adminAPI.get("/api/admin/dashboard");
+
+      // Redirect safely
+      navigate("/admin", { replace: true });
     } catch (err) {
-      setError(err.response?.data?.detail || "Invalid admin secret.");
+      localStorage.removeItem("adminSecret");
+      setError("Invalid admin secret");
     } finally {
       setLoading(false);
     }

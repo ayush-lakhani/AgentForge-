@@ -56,12 +56,12 @@ export const adminClient = axios.create({
   },
 });
 
-// Interceptor to add admin JWT token
+// Interceptor to add admin secret header (header-based auth)
 adminClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("admin_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const adminSecret = localStorage.getItem("adminSecret");
+    if (adminSecret) {
+      config.headers["x-admin-secret"] = adminSecret;
     }
     return config;
   },

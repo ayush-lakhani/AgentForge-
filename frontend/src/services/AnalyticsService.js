@@ -1,31 +1,31 @@
 /**
  * AnalyticsService — fetches /api/admin/analytics
  */
-import { adminAxios } from "../context/AdminAuthContext";
+import { adminAPI } from "../api/adminAPI";
 
 class AnalyticsServiceClass {
   async getAnalytics() {
-    const res = await adminAxios.get("/api/admin/analytics");
+    const res = await adminAPI.get("/api/admin/analytics");
     return res.data;
   }
 
   async getUsers(params = {}) {
-    const res = await adminAxios.get("/api/admin/users", { params });
+    const res = await adminAPI.get("/api/admin/users", { params });
     return res.data;
   }
 
   async getAdminLogs(limit = 100) {
-    const res = await adminAxios.get("/api/admin/logs", { params: { limit } });
+    const res = await adminAPI.get("/api/admin/logs", { params: { limit } });
     return res.data;
   }
 
   getExportUrl() {
-    const token = localStorage.getItem("admin_token");
-    return `/api/admin/users/export?token=${token}`;
+    const secret = localStorage.getItem("adminSecret");
+    return `/api/admin/users/export?secret=${secret}`;
   }
 
   async exportCSV() {
-    const res = await adminAxios.get("/api/admin/users/export", {
+    const res = await adminAPI.get("/api/admin/users/export", {
       responseType: "blob",
     });
     const url = URL.createObjectURL(res.data);
@@ -36,6 +36,17 @@ class AnalyticsServiceClass {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // User-specific analytics (Intelligence)
+  async getUserAnalytics() {
+    const res = await fetch("/api/analytics/profile", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to fetch intelligence data");
+    return await res.json();
   }
 }
 

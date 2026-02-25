@@ -1,7 +1,7 @@
 """
 Enterprise Admin Router — All admin endpoints, JWT-protected
 """
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from datetime import datetime, timezone
@@ -27,6 +27,14 @@ admin_only = Depends(RoleChecker(["admin", "superadmin"]))
 # ============================================================================
 class AdminLoginRequest(BaseModel):
     secret: str
+
+
+@router.get("/dashboard")
+async def admin_dashboard_check(x_admin_secret: str = Header(None)):
+    """Simple connection check for admin secret verification."""
+    if not x_admin_secret or x_admin_secret != settings.ADMIN_SECRET:
+        raise HTTPException(status_code=401, detail="Invalid admin secret")
+    return {"message": "Admin access granted"}
 
 
 @router.post("/login")

@@ -1,11 +1,11 @@
 /**
  * HealthService — fetches /api/admin/health
  */
-import { adminAxios } from "../context/AdminAuthContext";
+import { adminAPI } from "../api/adminAPI";
 
 class HealthServiceClass {
   async getHealth() {
-    const res = await adminAxios.get("/api/admin/health");
+    const res = await adminAPI.get("/api/admin/health");
     return res.data;
   }
 }

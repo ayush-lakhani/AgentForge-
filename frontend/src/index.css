@@ -58,7 +58,20 @@
   }
 
   .animate-shake {
-    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    @apply animate-[shake_0.5s_cubic-bezier(0.36,0.07,0.19,0.97)_both];
+  }
+
+  /* Stripe/Linear Style Animations */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary-500/10;
+  }
+
+  .premium-fade {
+    @apply animate-[fadeIn_0.5s_ease-out_forwards];
+  }
+
+  .staggered-entry {
+    @apply opacity-0 animate-[fadeInUp_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards];
   }
 
   .border-gradient {

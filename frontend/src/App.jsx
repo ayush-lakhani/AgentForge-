@@ -44,6 +44,7 @@ function NavbarWrapper({ darkMode, toggleDarkMode }) {
 function AppContent() {
   const { user, loading } = useAuth();
   const { adminToken } = useAdminAuth();
+  const adminSecret = localStorage.getItem("adminSecret");
   const [isAnimating, setIsAnimating] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
@@ -199,7 +200,7 @@ function AppContent() {
         {/* Admin Routes */}
         <Route
           path="/admin-login"
-          element={adminToken ? <Navigate to="/admin" /> : <AdminLogin />}
+          element={adminSecret ? <Navigate to="/admin" /> : <AdminLogin />}
         />
         <Route
           path="/admin"
