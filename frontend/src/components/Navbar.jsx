@@ -33,17 +33,20 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 glass-card border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm transition-all h-14 flex items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex items-center justify-between w-full">
           {/* Logo - Desktop */}
-          <Link to="/dashboard" className="hidden md:block">
+          <Link
+            to="/dashboard"
+            className="hidden md:block hover:opacity-80 transition-opacity"
+          >
             <img
               src={logoHorizontal}
               alt="Planvix Logo"
-              className="h-8 w-auto object-contain"
+              className="h-6 w-auto object-contain"
               style={{
-                filter: "drop-shadow(0 0 10px rgba(99, 102, 241, 0.3))",
+                filter: "drop-shadow(0 0 8px rgba(99, 102, 241, 0.2))",
               }}
             />
           </Link>
@@ -53,7 +56,7 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             <img
               src={logoHorizontal}
               alt="Planvix"
-              className="h-7 w-auto object-contain"
+              className="h-5 w-auto object-contain"
             />
           </Link>
 
@@ -65,13 +68,13 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-sm font-semibold ${
                     isActive(link.path)
-                      ? "bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-lg"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      ? "bg-gradient-to-r from-primary-600 to-accent-600 text-white shadow-md scale-105"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-900"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   {link.label}
                 </Link>
               );
@@ -79,27 +82,20 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* User Info */}
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight">
                 {user?.email}
               </p>
               {user?.tier === "pro" ? (
-                <div className="flex items-center justify-end gap-1 text-xs font-bold text-green-600 dark:text-green-400">
-                  <img
-                    src="/logo.svg"
-                    alt="Pro"
-                    className="w-4 h-4"
-                    style={{
-                      filter: "drop-shadow(0 2px 4px rgba(16, 185, 129, 0.4))",
-                    }}
-                  />
-                  PRO
+                <div className="flex items-center justify-end gap-1 text-[10px] font-black text-green-600 dark:text-green-400 uppercase tracking-tighter">
+                  <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+                  PRO PLAN
                 </div>
               ) : (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Free Tier
+                <p className="text-[10px] text-gray-500 dark:text-gray-500 font-bold uppercase tracking-tighter">
+                  Free Access
                 </p>
               )}
             </div>
@@ -107,14 +103,14 @@ export default function Navbar({ darkMode, toggleDarkMode }) {
             {/* Dropdown Toggle */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="relative p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors border border-transparent hover:border-gray-200 dark:hover:border-slate-800"
             >
-              <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <Menu className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
 
             {/* Dropdown Menu */}
             {menuOpen && (
-              <div className="absolute top-14 right-4 glass-card p-2 w-48 shadow-xl animate-fade-in">
+              <div className="absolute top-12 right-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border border-gray-200 dark:border-slate-800 p-1.5 w-48 shadow-2xl rounded-xl animate-fade-in z-50">
                 {/* Mobile Nav Links */}
                 <div className="md:hidden space-y-1 mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
                   {navLinks.map((link) => {
